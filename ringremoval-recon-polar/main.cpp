@@ -1,4 +1,3 @@
-
 #include <string>
 #include <algorithm>
 #include <sstream>
@@ -81,36 +80,6 @@ int find_min_distance_to_edge(float center_x, float center_y, int width, int hei
 	return min;
 }
 
-float** polar_transform(float** image, float center_x, float center_y, int width, int height, int* pol_width, int* pol_height, float thresh_max, float thresh_min){
-	int max_r = find_min_distance_to_edge(center_x, center_y, width, height);
-	*pol_width = max_r;
-	*pol_height = round(4.0*PI*float(max_r));
-	
-	float** polar_image = (float **) calloc(*pol_height, sizeof(float *));
-	for(int i=0; i<*pol_height; i++){
-		polar_image[i] = (float *) calloc(*pol_width, sizeof(float));
-	}
-	for(int row = 0; row<*pol_height; row++){
-		for(int r = 0; r<center_x; r++){
-			//float theta = float(row)/float(*pol_height)*3.0*PI - PI/2.0; //gives theta in the range [-PI/2, 5PI/2]
-			float theta = float(row)/float(2.0*max_r);
-			float fl_x = float(r)*cos(theta);
-			float fl_y = float(r)*sin(theta);
-			int x = round(fl_x + float(center_x));
-			int y = round(fl_y + float(center_y));
-			
-			polar_image[row][r] = image[y][x];
-			if(polar_image[row][r] > thresh_max){
-				polar_image[row][r] = thresh_max;
-			}else if(polar_image[row][r] < thresh_min){
-				polar_image[row][r] = thresh_min;
-			}
-		}
-	}
-
-	return polar_image;
-}
-
 /*Polar transform that uses simple bilinear interpolation to translate from (x,y) to (r, theta)*/
 float** polar_transform_bilinear(float** image, float center_x, float center_y, int width, int height, int* pol_width, int* pol_height, float thresh_max, float thresh_min){
 	int max_r = find_min_distance_to_edge(center_x, center_y, width, height);
@@ -155,23 +124,6 @@ float** polar_transform_bilinear(float** image, float center_x, float center_y, 
 	}
 
 	return polar_image;
-}
-
-float** inverse_polar_transform(float** polar_image, float center_x, float center_y, int pol_width, int  pol_height, int width, int height){
-	float** cart_image = (float **) calloc(height, sizeof(float *));
-	for(int i = 0; i < height; i++){
-		cart_image[i] = (float *) calloc(width, sizeof(float));
-	}
-	for(int row = 0; row < pol_height; row++){
-		for(int r = 0; r < pol_width; r++){
-			//float theta = float(row)/float(pol_height)*3.0*PI - PI/2.0;
-			float theta = float(row)/float(2.0*pol_width); 
-			int x = round(float(r)*cos(theta) + float(center_x));
-			int y = round(float(r)*sin(theta) + float(center_y));
-			cart_image[y][x] = polar_image[row][r];
-		}
-	}
-	return cart_image;
 }
 
 
@@ -418,7 +370,7 @@ float azi_mean_filter(float*** polar_image, int start_row, int start_col, int M_
 
 //Runs slightly faster than the above mean filter, but floating-point rounding causes errors on the order
 //of 1E-10. Should be small enough error to not care about, but be careful...
-void azi_mean_filter_2(float*** mean_filtered_image, float*** polar_image, int col, int M_azi, int pol_height){
+void azi_mean_filter_fast(float*** mean_filtered_image, float*** polar_image, int col, int M_azi, int pol_height){
 	float mean = 0, sum = 0, previous_sum = 0, num_elems = float(2*M_azi + 1);
 	int row;
 	//calculate average of first element of the column
@@ -508,14 +460,14 @@ void ring_filter(float*** polar_image, int pol_height, int pol_width, float thre
 	*/
 	
 	
-	//Do Azimuthal filter #2 (faster mean, does whole column in one call)
+	//Do faster Azimuthal filter (faster mean, does whole column in one call)
 	for(int col = 0; col < pol_width; col++){
 		if(col < pol_width/3){
-			azi_mean_filter_2(&mean_filtered_image, polar_image, col, M_azi, pol_height);
+			azi_mean_filter_fast(&mean_filtered_image, polar_image, col, M_azi, pol_height);
 		}else if(col < 2*pol_width/3){
-			azi_mean_filter_2(&mean_filtered_image, polar_image, col, 2*M_azi/3, pol_height);
+			azi_mean_filter_fast(&mean_filtered_image, polar_image, col, 2*M_azi/3, pol_height);
 		}else{
-			azi_mean_filter_2(&mean_filtered_image, polar_image, col, M_azi/3, pol_height);
+			azi_mean_filter_fast(&mean_filtered_image, polar_image, col, M_azi/3, pol_height);
 		}
 	}
 	
