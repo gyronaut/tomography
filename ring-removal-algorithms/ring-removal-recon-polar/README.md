@@ -11,7 +11,7 @@ methods for flat-detector CT" by Prell, et al. It works by:
 kernel width that depends on the radius).
 * Taking the difference between the filtered and original 
 polar image.
-* Performing a median filter in the azimuthal direction 
+* Performing a mean filter in the azimuthal direction 
 (again with a kernel width that depends on the radius).
 * Doing an inverse polar transformation (giving an image
 of just the rings).
