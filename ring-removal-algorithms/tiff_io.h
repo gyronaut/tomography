@@ -1,10 +1,14 @@
 /* Class to read and write tiff files */
 
-#ifndef IMAGE_FILTERS_H
- #define IMAGE_FILTERS_H
+#ifndef TIFF_IO_H
+#define TIFF_IO__H
  
- #pragma once
- 
+#pragma once
+
+#include <string>
+#include "tiff.h"
+#include "tiffio.h"
+
  class TiffIO
  {
  private:

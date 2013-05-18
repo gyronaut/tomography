@@ -17,55 +17,6 @@ int round(float x){
 	return (x > 0.0) ? floor(x+0.5) : ceil(x+0.5);
 }
 
-float** ReadFloatImage(string input_name, int* w_ptr, int* h_ptr)
-{
-	int width, height;
-
-	TIFF* tif = TIFFOpen(input_name.c_str(), "r");
-
-	if(!tif){
-		return NULL;
-	}
-
-	TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-	TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
-	*w_ptr = width;
-	*h_ptr = height;
-
-	float* image = (float*) calloc(width*height, sizeof(float));
-	float** image_rows = (float**) calloc(height, sizeof(float *));
-
-
-	float *buffer;
-	tstrip_t strip;
-	uint32* bc;
-	uint32 stripsize;
-	uint16 num_strips= TIFFNumberOfStrips(tif);
-	TIFFGetField(tif, TIFFTAG_STRIPBYTECOUNTS, &bc);
-	stripsize = bc[0];
-	buffer = (float *)_TIFFmalloc(stripsize);
-	uint32 location = 0;
-	for (strip = 0; strip < num_strips; strip++) {
-		if (bc[strip] != stripsize) {
-			buffer = (float *)_TIFFrealloc(buffer, bc[strip]);
-			stripsize = bc[strip];
-		}
-		TIFFReadEncodedStrip(tif, strip, buffer, bc[strip]);
-		for(int i=0; i< bc[strip]/sizeof(float); i++){
-			image[location+i] = buffer[i];
-		}
-		location += stripsize/sizeof(float);
-	}
-	_TIFFfree(buffer);
-	TIFFClose(tif);
-
-	image_rows[0] = image;
-	for (int i=1; i<height; i++) {
-		image_rows[i] = image_rows[i-1] + width;
-	}
-	return image_rows;
-}
-
 int FindMinDistanceToEdge(float center_x, float center_y, int width, int height){
 	int* dist = new int[4];
 	dist[0] = center_x;
@@ -280,7 +231,7 @@ void quicksort_2(float* median_array, int* position_array, int left, int right){
 	}
 }
 
-float DoRadialMedianFilter(float*** polar_image, int start_row, int start_col, int m_rad, int ring_width, int pol_width, int pol_height){
+float DoMedianFilter1D(float*** polar_image, int start_row, int start_col, int m_rad, int ring_width, int pol_width, int pol_height){
 	float* median_array = (float*) calloc(2*m_rad+1, sizeof(float));
 	for(int n = -m_rad; n < m_rad + 1; n++){
 		int row = start_row;
@@ -463,11 +414,11 @@ void DoRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	for(int row = 0; row < pol_height; row++){
 		for(int col = 0; col <  pol_width; col++){
 			if(col < pol_width/3){
-				filtered_image[row][col] = DoRadialMedianFilter(polar_image, row, col, m_rad, ring_width, pol_width, pol_height);
+				filtered_image[row][col] = DoMedianFilter1D(polar_image, row, col, m_rad, ring_width, pol_width, pol_height);
 			}else if(col < 2*pol_width/3){
-				filtered_image[row][col] = DoRadialMedianFilter(polar_image, row, col, 2*m_rad/3, ring_width, pol_width, pol_height);
+				filtered_image[row][col] = DoMedianFilter1D(polar_image, row, col, 2*m_rad/3, ring_width, pol_width, pol_height);
 			}else{
-				filtered_image[row][col] = DoRadialMedianFilter(polar_image, row, col, m_rad/3, ring_width, pol_width, pol_height);
+				filtered_image[row][col] = DoMedianFilter1D(polar_image, row, col, m_rad/3, ring_width, pol_width, pol_height);
 			}
 		}
 	}
@@ -528,47 +479,6 @@ void DoRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	}
 }
 
-void WriteFloat(float** corrected_image, string output_name, int width, int height)
-{
-	float* output = (float *) calloc(width*height, sizeof(float));
-	float* buffer = (float *) calloc(width, sizeof(float));
-	for(int i = 0; i < height; i++){
-		memcpy(buffer, corrected_image[i], width*sizeof(float));
-		for(int j = 0; j < width; j++){
-			output[j+(i*width)] = buffer[j]; 
-		}
-	}
-	TIFF* resultTif = TIFFOpen(output_name.c_str(), "w");
-	if(!resultTif){
-		return;
-	}
-	TIFFSetField(resultTif, TIFFTAG_IMAGEWIDTH, width);  
-	TIFFSetField(resultTif, TIFFTAG_IMAGELENGTH, height);    
-	TIFFSetField(resultTif, TIFFTAG_SAMPLESPERPIXEL, 1);
-	TIFFSetField(resultTif, TIFFTAG_SAMPLEFORMAT, 3); //floating point = 3
-	TIFFSetField(resultTif, TIFFTAG_BITSPERSAMPLE, 32);
-	TIFFSetField(resultTif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-	TIFFSetField(resultTif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-	TIFFSetField(resultTif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-	float *buf = NULL;
-	tsize_t linebytes =  width*sizeof(float);
-	buf =(float *)_TIFFmalloc(linebytes);
-	
-	for(uint32 row = 0; row < height; row++){
-		for(int col = 0; col < width; col++){
-			buf[col] = output[col+row*width];
-		}
-		if (TIFFWriteScanline(resultTif, buf, row, 0) < 0){
-			break;
-		}
-	}
-	TIFFClose(resultTif);
-	if(buf){
-		_TIFFfree(buf);
-	}
-	free(buffer);
-	free(output);
-}
 
 string getName(string name_base, int img_num){
 	stringstream stream;
