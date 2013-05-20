@@ -5,24 +5,28 @@
  #ifndef IMAGE_TRANSFORMS_H
  #define IMAGE_TRANSFORMS_H
  
+ #define PI 3.14159265359
+ 
  #pragma once
  
  class ImageTransformClass
  {
  private:
-	int FindMinDistanceToEdge(float center_x, float center_y, int width, int height);
+	int round(float x);
+	int findMinDistanceToEdge(float center_x, float center_y, int width, int height);
  public:
 	ImageTransformClass();
 	~ImageTransformClass();
-	float** PolarTransform(float** image, float center_x, float center_y, int width, int height,
+	float** polarTransform(float** image, float center_x, float center_y, int width, int height,
 						   int* pol_width, int* pol_height, float thresh_max, float thresh_min);
-	float** PolarTransformBilinear(float** image, float center_x, float center_y, int width,
+	float** polarTransformBilinear(float** image, float center_x, float center_y, int width,
 								   int height, int* pol_width, int* pol_height, float thresh_max,
 								   float thresh_min);
-	float** InversePolarTransform(float** polar_image, float center_x, float center_y,
+	float** inversePolarTransform(float** polar_image, float center_x, float center_y,
 								  int pol_width, int  pol_height, int width, int height);
-	float** InversePolarTransformBilinear(float** polar_image, float center_x, float center_y,
+	float** inversePolarTransformBilinear(float** polar_image, float center_x, float center_y,
 										  int pol_width, int  pol_height, int width, int height);
 	
  };
+ 
  #endif

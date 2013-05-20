@@ -16,8 +16,9 @@
  public:
 	TiffIO();
 	~TiffIO();
-	float** ReadFloatImage(string input_name, int* w_ptr, int* h_ptr);
-	void WriteFloatImage(float** image, string output_name, int width, int height);
+	float** readFloatImage(string input_name, int* w_ptr, int* h_ptr);
+	void writeFloatImage(float** image, string output_name, int width, int height);
  
  };
+ 
  #endif

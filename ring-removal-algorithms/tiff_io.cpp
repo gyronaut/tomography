@@ -10,11 +10,11 @@ TiffIO::~TiffIO()
 {
 }
 
-float** TiffIO::ReadFloatImage(string input_name, int* w_ptr, int* h_ptr)
+float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr)
 {
 	int width, height;
 
-	TIFF* tif = TIFFOpen(input_name.c_str(), "r");
+	TIFF* tif = TIFFOpen(image_name.c_str(), "r");
 
 	if(!tif){
 		return NULL;
@@ -59,43 +59,43 @@ float** TiffIO::ReadFloatImage(string input_name, int* w_ptr, int* h_ptr)
 	return image_rows;
 }
 
-void TiffIO::WriteFloat(float** corrected_image, string output_name, int width, int height)
+void TiffIO::writeFloat(float** image_rows, string output_name, int width, int height)
 {
 	float* output = (float *) calloc(width*height, sizeof(float));
 	float* buffer = (float *) calloc(width, sizeof(float));
 	for(int i = 0; i < height; i++){
-		memcpy(buffer, corrected_image[i], width*sizeof(float));
+		memcpy(buffer, image_rows[i], width*sizeof(float));
 		for(int j = 0; j < width; j++){
 			output[j+(i*width)] = buffer[j]; 
 		}
 	}
-	TIFF* resultTif = TIFFOpen(output_name.c_str(), "w");
-	if(!resultTif){
+	TIFF* tif = TIFFOpen(output_name.c_str(), "w");
+	if(!tif){
 		return;
 	}
-	TIFFSetField(resultTif, TIFFTAG_IMAGEWIDTH, width);  
-	TIFFSetField(resultTif, TIFFTAG_IMAGELENGTH, height);    
-	TIFFSetField(resultTif, TIFFTAG_SAMPLESPERPIXEL, 1);
-	TIFFSetField(resultTif, TIFFTAG_SAMPLEFORMAT, 3); //floating point = 3
-	TIFFSetField(resultTif, TIFFTAG_BITSPERSAMPLE, 32);
-	TIFFSetField(resultTif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-	TIFFSetField(resultTif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-	TIFFSetField(resultTif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+	TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);  
+	TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height);    
+	TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+	TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, 3); //floating point = 3
+	TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 32);
+	TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+	TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+	TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
 	float *buf = NULL;
 	tsize_t linebytes =  width*sizeof(float);
-	buf =(float *)_TIFFmalloc(linebytes);
+	tiff_buffer =(float *)_TIFFmalloc(linebytes);
 	
 	for(uint32 row = 0; row < height; row++){
 		for(int col = 0; col < width; col++){
-			buf[col] = output[col+row*width];
+			tiff_buffer[col] = output[col+row*width];
 		}
-		if (TIFFWriteScanline(resultTif, buf, row, 0) < 0){
+		if (TIFFWriteScanline(tif, tiff_buffer, row, 0) < 0){
 			break;
 		}
 	}
-	TIFFClose(resultTif);
-	if(buf){
-		_TIFFfree(buf);
+	TIFFClose(tif);
+	if(tiff_buffer){
+		_TIFFfree(tiff_buffer);
 	}
 	free(buffer);
 	free(output);
