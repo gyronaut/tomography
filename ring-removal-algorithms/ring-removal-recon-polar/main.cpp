@@ -25,11 +25,6 @@ void ElemSwapInt(int* arr, int index1, int index2){
 	arr[index2] = store1;
 }
 
-/*Partition and Quicksort algorithm taken from Wikipedia Quicksort Page:
- *
- * http://en.wikipedia.org/wiki/Quicksort#In-place_version
- *
- */
 
 int partition_2(float* median_array, int* position_array, int left, int right, int pivot_index){
 	float pivot_value = median_array[pivot_index];
@@ -165,17 +160,12 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	
 	//Do radial median filter to get filtered_image
 	printf("Performing Radial Filter on polar image... \n");
-	for(int row = 0; row < pol_height; row++){
-		for(int col = 0; col <  pol_width; col++){
-			if(col < pol_width/3){
-				filtered_image[row][col] = doMedianFilter1D(polar_image, row, col, m_rad, ring_width, pol_width, pol_height);
-			}else if(col < 2*pol_width/3){
-				filtered_image[row][col] = DoMedianFilter1D(polar_image, row, col, 2*m_rad/3, ring_width, pol_width, pol_height);
-			}else{
-				filtered_image[row][col] = DoMedianFilter1D(polar_image, row, col, m_rad/3, ring_width, pol_width, pol_height);
-			}
-		}
-	}
+			
+	filter_machine->doMedianFilter1D(filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, x, m_rad, ring_width, pol_width, pol_height);
+
+	filter_machine->doMedianFilter1D(filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, x, 2*m_rad/3, ring_width, pol_width, pol_height);
+
+	filter_machine->doMedianFilter1D(filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, x, m_rad/3, ring_width, pol_width, pol_height);
 	/*
 	printf("Performing Faster Radial Filter on polar_image... \n");
 	for(int row = 0; row < pol_height; row++){
@@ -213,7 +203,9 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	*/
 	
 	
-	//Do Azimuthal filter #2 (faster mean, does whole column in one call)
+	/* Do Azimuthal filter #2 (faster mean, does whole column in one call)
+	 * using different kernel sizes for the different regions of the image (based on radius)
+	 */
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height, pol_width/3, y, m_azi, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3 + 1, pol_height, 2*pol_width/3, y, 2*m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3 + 1, pol_height, pol_width, y, m_azi/3, pol_width, pol_height);

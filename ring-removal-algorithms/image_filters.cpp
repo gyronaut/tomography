@@ -42,33 +42,67 @@ void ImageFilterClass::quickSort(float* median_array, int left, int right)
 
 
 void ImageFilterClass::doMedianFilter1D(float *** filtered_image, float*** image, int start_row,
-										char axis, int start_col, int kernel_rad, int filter_width,
-										int width, int height)
+										int start_col, int end_row, int end_col, int axis, 
+										int kernel_rad,	int filter_width, int width, int height)
 {
+	int row, col;
 	float* median_array = (float*) calloc(2*kernel_rad+1, sizeof(float));
-	for(int n = -kernel_rad; n < kernel_rad + 1; n++){
-		int row = start_row;
-		int col = start_col + round(float(n)*float(ring_width)/float(2*kernel_rad));
-		if(col < 0){
-			col = -col;
-			if(row < height/2){
-				row += height/2;
-			}else{
-				row -= height/2;
+	if(axis == 'x'){
+		for(row = start_row; row =< end_row; row++){
+			for(col = start_col; col =< end_col; col++){
+				for(int n = -kernel_rad; n < kernel_rad + 1; n++){
+					subsampl_col = col + round(float(n)*float(ring_width)/float(2*kernel_rad));
+					if(subsampl_col < 0){
+						subsampl_col = -subsampl_col;
+						if(row < height/2){
+							row += height/2;
+						}else{
+							row -= height/2;
+						}
+						median_array[n+kernel_rad] = image[0][row][subsampl_col];
+					}else if(subsampl_col >= pol_width){
+						median_array[n+kernel_rad] = 0.0;
+					}else{
+						median_array[n+kernel_rad] = image[0][row][subsampl_col];
+					}
+				}
+				//Sort the array - this part is REALLY slow right now... why is that?
+				quickSort(median_array, 0, 2*kernel_rad);
+				filtered_image[0][row][col] = median_array[kernel_rad];
 			}
-			median_array[n+kernel_rad] = image[0][row][col];
-		}else if(col >= pol_width){
-			median_array[n+kernel_rad] = 0.0;
-		}else{
-			median_array[n+kernel_rad] = image[0][row][col];
+		}
+	}else if(axis == 'y'){
+		for(col = start_col; col =< end_col; col++){
+			for(row = start_row; row =< end_row; row++){
+				for(int n = -kernel_rad; n < kernel_rad + 1; n++){
+					subsampl_row = row + round(float(n)*float(ring_width)/float(2*kernel_rad));
+					//Dealing with edge cases - need to make this a bit more elegant...
+					if(subsampl_row < 0){
+						/*subsampl_col = -subsampl_col;
+						if(row < height/2){
+							row += height/2;
+						}else{
+							row -= height/2;
+						}
+						median_array[n+kernel_rad] = image[0][row][subsampl_col];
+						*/
+					}else if(subsampl_col >= pol_width){
+						median_array[n+kernel_rad] = 0.0;
+					}else{
+						median_array[n+kernel_rad] = image[0][subsample_row][col];
+					}
+				}
+				//Sort the array - this part is REALLY slow right now... why is that?
+				quickSort(median_array, 0, 2*kernel_rad);
+				filtered_image[0][row][col] = median_array[kernel_rad];
+			}
 		}
 	}
-	Quicksort(median_array, 0, 2*kernel_rad);
-	return median_array[kernel_rad];
 }
 
-//Runs slightly faster than the above mean filter, but floating-point rounding causes errors on the order
-//of 1E-10. Should be small enough error to not care about, but be careful...
+/* Runs slightly faster than the above mean filter, but floating-point rounding causes errors on
+ * the order of 1E-10. Should be small enough error to not care about, but be careful...
+ */
 void ImageFilterClass::doMeanFilterFast1D(float*** filtered_image, float*** image,
  									      int start_row, int start_col, int end_row, int end_col,
 										  char axis, int kernel_rad, int width, int height)
