@@ -5,6 +5,9 @@
  #ifndef IMAGE_FILTERS_H
  #define IMAGE_FILTERS_H
  
+ #include <cmath> 
+ #include <cstdlib>
+ #include <cstdio>
  #pragma once
  
  class ImageFilterClass

@@ -4,6 +4,10 @@
 
  #ifndef IMAGE_TRANSFORMS_H
  #define IMAGE_TRANSFORMS_H
+
+ #include <cmath>
+ #include <cstdlib>
+ #include <cstdio>
  
  #define PI 3.14159265359
  

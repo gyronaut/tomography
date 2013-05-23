@@ -19,6 +19,8 @@ int round(float x){
 	return (x > 0.0) ? floor(x+0.5) : ceil(x+0.5);
 }
 
+/* Stuff for trying to get a faster median sort working, didn't really pan out.
+ *
 void ElemSwapInt(int* arr, int index1, int index2){
 	int store1 = arr[index1];
 	arr[index1] = arr[index2];
@@ -28,7 +30,7 @@ void ElemSwapInt(int* arr, int index1, int index2){
 
 int partition_2(float* median_array, int* position_array, int left, int right, int pivot_index){
 	float pivot_value = median_array[pivot_index];
-	ElemSwap(median_array, pivot_index, right);
+	lemSwap(median_array, pivot_index, right);
 	ElemSwapInt(position_array, pivot_index, right);
 	int store_index = left;
 	for(int i=left; i < right; i++){
@@ -148,24 +150,26 @@ void radial_median_filter_faster_outer(float*** polar_image, float*** filtered_i
 		filtered_image[0][start_row][col] = median_array[m_rad];
 	}
 }
+ *
+ */
 
-
-void doRingFilter(float*** polar_image, int pol_height, int pol_width, float threshold, int m_rad, int m_azi, int ring_width, ImageFiltersClass* filter_machine){
+void doRingFilter(float*** polar_image, int pol_height, int pol_width, float threshold, int m_rad, int m_azi, int ring_width, ImageFilterClass* filter_machine){
 	float* image_block = (float *) calloc(pol_height*pol_width, sizeof(float ));
-	float** filtered_image = (float **) calloc(pol_height, sizeof(float));
+	float** filtered_image = (float **) calloc(pol_height, sizeof(float*));
 	filtered_image[0] = image_block;
 	for(int i=1; i<pol_height; i++){
-		filtered_image[i] = filtered_image;
+		filtered_image[i] = filtered_image[i-1]+pol_width;
 	}
-	
+	printf("Pol_width: %d, pol_height: %d\n", pol_width, pol_height);	
 	//Do radial median filter to get filtered_image
 	printf("Performing Radial Filter on polar image... \n");
 			
-	filter_machine->doMedianFilter1D(filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, x, m_rad, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad, ring_width, pol_width, pol_height);
 
-	filter_machine->doMedianFilter1D(filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, x, 2*m_rad/3, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
 
-	filter_machine->doMedianFilter1D(filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, x, m_rad/3, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
+	printf("Random filtered value: %f", filtered_image[750][430]);
 	/*
 	printf("Performing Faster Radial Filter on polar_image... \n");
 	for(int row = 0; row < pol_height; row++){
@@ -206,19 +210,22 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	/* Do Azimuthal filter #2 (faster mean, does whole column in one call)
 	 * using different kernel sizes for the different regions of the image (based on radius)
 	 */
-	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height, pol_width/3, y, m_azi, pol_width, pol_height);
-	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3 + 1, pol_height, 2*pol_width/3, y, 2*m_azi/3, pol_width, pol_height);
-	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3 + 1, pol_height, pol_width, y, m_azi/3, pol_width, pol_height);
+	printf("Performing Azimuthal mean filter... \n");
+	fflush(stdout);
+	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3, 'y', m_azi, pol_width, pol_height);
+	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3 + 1, pol_height-1, 2*pol_width/3, 'y', 2*m_azi/3, pol_width, pol_height);
+	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi/3, pol_width, pol_height);
 
-
+	printf("Setting polar image equal to final ring image.. \n");
+	fflush(stdout);
 	//Set "polar_image" to the fully filtered data
 	for(int row = 0; row < pol_height; row++){
 		for(int col = 0; col < pol_width; col++){
 			polar_image[0][row][col] = filtered_image[row][col];
 		}
 	}
-	free(image_block);
-	free(filtered_image);
+//	free(image_block);
+//	free(filtered_image);
 }
 
 
@@ -263,7 +270,7 @@ int main(int argc, char** argv){
 		float center_x=511, center_y=511, thresh_max=0.0015, thresh_min=0.00005, threshold = 0.00034;
 		char * filter;
 		
-		ImageFilterClass* filter_machine = new ImageFIlterClass();
+		ImageFilterClass* filter_machine = new ImageFilterClass();
 		ImageTransformClass* transform_machine = new ImageTransformClass();
 		TiffIO* tiff_io = new TiffIO();
 		
@@ -306,17 +313,17 @@ int main(int argc, char** argv){
 			//Call Ring Algorithm
 
 			time(&t_start);
-			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine);
+	//		doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine);
 			time(&t_end);
 			double seconds = difftime(t_end, t_start);
 			printf("Time to perform Ring Filtering: %.2f sec. \n", seconds);
 
 			//Translate Ring-Image to Cartesian Coordinates
-
+			printf("Doing inverse polar transform...\n");
 			ring_image = transform_machine->inversePolarTransformBilinear(polar_image, center_x, center_y, pol_width, pol_height, width, height);
 
 			//Subtract Ring-Image from Image
-	
+			printf("Subtracting rings from original image...\n");	
 			for(int row=0; row < height; row++){
 				for(int col=0; col < width; col++){
 					image[row][col] -= ring_image[row][col];
@@ -324,7 +331,8 @@ int main(int argc, char** argv){
 			}
 	
 			//Write out Corrected-Image
-			tiff_io->writeFloat(image, output_path + output_name, width, height);
+			printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
+			tiff_io->writeFloatImage(image, output_path + output_name, width, height);
 
 		}
 		return 0;

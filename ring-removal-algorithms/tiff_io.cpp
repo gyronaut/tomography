@@ -1,5 +1,5 @@
 
-#include tiff_io.h
+#include "tiff_io.h"
 
 using namespace std;
 
@@ -31,8 +31,8 @@ float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr)
 
 	float *buffer;
 	tstrip_t strip;
-	uint32* bc;
-	uint32 stripsize;
+	uint64* bc;
+	uint64 stripsize;
 	uint16 num_strips= TIFFNumberOfStrips(tif);
 	TIFFGetField(tif, TIFFTAG_STRIPBYTECOUNTS, &bc);
 	stripsize = bc[0];
@@ -59,7 +59,7 @@ float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr)
 	return image_rows;
 }
 
-void TiffIO::writeFloat(float** image_rows, string output_name, int width, int height)
+void TiffIO::writeFloatImage(float** image_rows, string output_name, int width, int height)
 {
 	float* output = (float *) calloc(width*height, sizeof(float));
 	float* buffer = (float *) calloc(width, sizeof(float));
@@ -81,7 +81,7 @@ void TiffIO::writeFloat(float** image_rows, string output_name, int width, int h
 	TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 	TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 	TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-	float *buf = NULL;
+	float *tiff_buffer = NULL;
 	tsize_t linebytes =  width*sizeof(float);
 	tiff_buffer =(float *)_TIFFmalloc(linebytes);
 	
