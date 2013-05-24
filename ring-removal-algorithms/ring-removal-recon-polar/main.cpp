@@ -163,7 +163,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	printf("Pol_width: %d, pol_height: %d\n", pol_width, pol_height);	
 	//Do radial median filter to get filtered_image
 	printf("Performing Radial Filter on polar image... \n");
-	clock_t median_start = clock();
+	clock_t start_median = clock();
 		
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad, ring_width, pol_width, pol_height);
 
@@ -171,8 +171,8 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
 	
-	clock_t median_end = clock();
-	printf("Time for median filter: %f sec \n", (float(median_end - median_start)/CLOCKS_PER_SEC));
+	clock_t end_median = clock();
+	printf("Time for median filter: %f sec \n", (float(end_median - start_median)/CLOCKS_PER_SEC));
 
 	//subtract filtered image from polar image to get difference image & do last thresholding
 
@@ -191,14 +191,14 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	 */
 
 	printf("Performing Azimuthal mean filter... \n");
-	clock_t mean_start = clock();
+	clock_t start_mean = clock();
 
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi/3, pol_width, pol_height);
 
-	clock_t mean_end = clock();
-	printf("Time for mean filtering: %f sec\n", (float(mean_end-mean_start)/CLOCKS_PER_SEC));
+	clock_t end_mean = clock();
+	printf("Time for mean filtering: %f sec\n", (float(end_mean-start_mean)/CLOCKS_PER_SEC));
 
 	printf("Setting polar image equal to final ring image.. \n");
 	//Set "polar_image" to the fully filtered data
