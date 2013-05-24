@@ -163,12 +163,16 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	printf("Pol_width: %d, pol_height: %d\n", pol_width, pol_height);	
 	//Do radial median filter to get filtered_image
 	printf("Performing Radial Filter on polar image... \n");
-			
+	clock_t median_start = clock();
+		
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad, ring_width, pol_width, pol_height);
 
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
 
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
+	
+	clock_t median_end = clock();
+	printf("Time for median filter: %f sec \n", (float(median_end - median_start)/CLOCKS_PER_SEC));
 
 	//subtract filtered image from polar image to get difference image & do last thresholding
 
@@ -187,13 +191,16 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	 */
 
 	printf("Performing Azimuthal mean filter... \n");
-	fflush(stdout);
+	clock_t mean_start = clock();
+
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi/3, pol_width, pol_height);
 
+	clock_t mean_end = clock();
+	printf("Time for mean filtering: %f sec\n", (float(mean_end-mean_start)/CLOCKS_PER_SEC));
+
 	printf("Setting polar image equal to final ring image.. \n");
-	fflush(stdout);
 	//Set "polar_image" to the fully filtered data
 	for(int row = 0; row < pol_height; row++){
 		for(int col = 0; col < pol_width; col++){
@@ -270,7 +277,7 @@ int main(int argc, char** argv){
 
 		for(int img = first_img_num; img < last_img_num + 1; img++){
 
-			time_t t_start, t_end;
+			clock_t start = clock();
 			float **image=0, **polar_image=0, **ring_image=0;
 			input_name = getName(input_base, img);
 			output_name = getName(output_base, img);
@@ -283,20 +290,22 @@ int main(int argc, char** argv){
 				return 1;
 			}
 			//Translate Image to Polar Coordinates
-
+			printf("Performing Polar Transformation...\n");
+			clock_t start_polar = clock();
 			polar_image = transform_machine->polarTransformBilinear(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min);
-
+			clock_t end_polar = clock();
+			printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
+			
 			//Call Ring Algorithm
 
-			time(&t_start);
 			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine);
-			time(&t_end);
-			double seconds = difftime(t_end, t_start);
-			printf("Time to perform Ring Filtering: %.2f sec. \n", seconds);
-
+						
 			//Translate Ring-Image to Cartesian Coordinates
 			printf("Doing inverse polar transform...\n");
+			clock_t start_invpol = clock();
 			ring_image = transform_machine->inversePolarTransformBilinear(polar_image, center_x, center_y, pol_width, pol_height, width, height);
+			clock_t end_invpol = clock();
+			printf("Time for Inverse Polar Transform: %f sec\n", (float(end_invpol - start_invpol)/CLOCKS_PER_SEC));
 
 			//Subtract Ring-Image from Image
 			printf("Subtracting rings from original image...\n");	
@@ -309,7 +318,8 @@ int main(int argc, char** argv){
 			//Write out Corrected-Image
 			printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
 			tiff_io->writeFloatImage(image, output_path + output_name, width, height);
-			
+			clock_t end = clock();
+			printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
 			free(ring_image[0]);
 			free(ring_image);
 			free(polar_image[0]);
