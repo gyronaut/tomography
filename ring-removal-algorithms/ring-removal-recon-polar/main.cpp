@@ -169,16 +169,9 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
 
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
-	printf("Random filtered value: %f", filtered_image[750][430]);
-	/*
-	printf("Performing Faster Radial Filter on polar_image... \n");
-	for(int row = 0; row < pol_height; row++){
-		radial_median_filter_faster_inner(polar_image, &filtered_image, row, m_rad, ring_width, pol_width, pol_height);
-		radial_median_filter_faster_middle(polar_image, &filtered_image, row, 2*m_rad/3, ring_width, pol_width, pol_height);
-		radial_median_filter_faster_outer(polar_image, &filtered_image, row, m_rad/3, ring_width, pol_width, pol_height);
-	}
-	*/
+
 	//subtract filtered image from polar image to get difference image & do last thresholding
+
 	printf("Calculating Difference Image... \n");
 	for(int row = 0; row < pol_height; row++){
 		for(int col = 0; col <  pol_width; col++){
@@ -186,34 +179,17 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 			if(polar_image[0][row][col] > threshold || polar_image[0][row][col] < -threshold){
 				polar_image[0][row][col] = 0;
 			}
-			//polar_image[0][row][col] = filtered_image[row][col];
 		}
 	}
-
-	/*
-	//Do Azimuthal mean filter
-	printf("Performing Azimuthal Filter on polar image... \n");
-	for(int row = 0; row < pol_height; row++){
-		for(int col = 0; col < pol_width; col++){
-			if(col < pol_width/3){
-				mean_filtered_image[row][col] = azi_mean_filter(polar_image, row, col, m_azi, pol_height);
-			}else if(col < 2*pol_width/3){
-				mean_filtered_image[row][col] = azi_mean_filter(polar_image, row, col, 2*m_azi/3, pol_height);
-			}else{
-				mean_filtered_image[row][col] = azi_mean_filter(polar_image, row, col, m_azi/3, pol_height);
-			}
-		}
-	}
-	*/
-	
 	
 	/* Do Azimuthal filter #2 (faster mean, does whole column in one call)
 	 * using different kernel sizes for the different regions of the image (based on radius)
 	 */
+
 	printf("Performing Azimuthal mean filter... \n");
 	fflush(stdout);
-	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3, 'y', m_azi, pol_width, pol_height);
-	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3 + 1, pol_height-1, 2*pol_width/3, 'y', 2*m_azi/3, pol_width, pol_height);
+	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi, pol_width, pol_height);
+	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi/3, pol_width, pol_height);
 
 	printf("Setting polar image equal to final ring image.. \n");
@@ -224,8 +200,8 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 			polar_image[0][row][col] = filtered_image[row][col];
 		}
 	}
-//	free(image_block);
-//	free(filtered_image);
+	free(image_block);
+	free(filtered_image);
 }
 
 
@@ -313,7 +289,7 @@ int main(int argc, char** argv){
 			//Call Ring Algorithm
 
 			time(&t_start);
-	//		doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine);
+			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine);
 			time(&t_end);
 			double seconds = difftime(t_end, t_start);
 			printf("Time to perform Ring Filtering: %.2f sec. \n", seconds);
@@ -333,7 +309,13 @@ int main(int argc, char** argv){
 			//Write out Corrected-Image
 			printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
 			tiff_io->writeFloatImage(image, output_path + output_name, width, height);
-
+			
+			free(ring_image[0]);
+			free(ring_image);
+			free(polar_image[0]);
+			free(polar_image);
+			free(image[0]);
+			free(image);
 		}
 		return 0;
 	}

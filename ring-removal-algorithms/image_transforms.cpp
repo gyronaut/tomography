@@ -167,9 +167,6 @@ float** ImageTransformClass::inversePolarTransformBilinear(float** polar_image, 
 				row_ceil = ceil(row_float);
 				row_1 = row_floor%(pol_height);
 				row_2 = row_ceil%(pol_height);
-			//	if(y == 499){
-			//		printf("x = %d, y = %d, col_1 = %d, col_2 = %d, row_1 = %d, row_2 = %d\n", x, y, col_1, col_2, row_1, row_2);
-			//	}
 				if(col_1 == col_2){
 					if(row_1 == row_2){
 						value = polar_image[row_1][col_1];
@@ -182,12 +179,8 @@ float** ImageTransformClass::inversePolarTransformBilinear(float** polar_image, 
 					value = (row_ceil - row_float)*((col_2 - r)*polar_image[row_1][col_1] + (r - col_1)*polar_image[row_1][col_2]) + (row_float - row_floor)*((col_2 - r)*polar_image[row_2][col_1] + (r - col_1)*polar_image[row_2][col_2]);
 				}
 			}
-		//	printf("(%d, %d) = %f \n", width-1-x, height-1-y, value);
-		//	cart_image[(height-1)-y][(width-1)-x] = value;
 			cart_image[y][x] = value;	
 		}
 	}
-	printf("Done with inverse transform! \n");
-	fflush(stdout);
 	return cart_image;
 }

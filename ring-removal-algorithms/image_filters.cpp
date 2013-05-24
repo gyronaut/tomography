@@ -116,10 +116,11 @@ void ImageFilterClass::doMeanFilterFast1D(float*** filtered_image, float*** imag
 {
 	float mean = 0, sum = 0, previous_sum = 0, num_elems = float(2*kernel_rad + 1);
 	int row, col;
-	
+	printf("Num Elems: %f\n", num_elems);
 	if(axis == 'x'){
 		//iterate over each row of the image subset
 		for(row = start_row; row <= end_row; row++){
+			sum = 0;
 			//calculate average of first element of the column
 			for(int n = - kernel_rad; n < (kernel_rad + 1); n++){
 				col = n + start_col;
@@ -151,6 +152,7 @@ void ImageFilterClass::doMeanFilterFast1D(float*** filtered_image, float*** imag
 	}else if(axis == 'y'){
 		//iterate over each column of the image subset
 		for(col = start_col; col <= end_col; col++){
+			sum = 0;
 			//calculate average of first element of the column
 			for(int n = - kernel_rad; n < (kernel_rad + 1); n++){
 				row = n + start_row;
