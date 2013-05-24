@@ -153,16 +153,16 @@ void radial_median_filter_faster_outer(float*** polar_image, float*** filtered_i
  *
  */
 
-void doRingFilter(float*** polar_image, int pol_height, int pol_width, float threshold, int m_rad, int m_azi, int ring_width, ImageFilterClass* filter_machine){
+void doRingFilter(float*** polar_image, int pol_height, int pol_width, float threshold, int m_rad, int m_azi, int ring_width, ImageFilterClass* filter_machine, int verbose){
 	float* image_block = (float *) calloc(pol_height*pol_width, sizeof(float ));
 	float** filtered_image = (float **) calloc(pol_height, sizeof(float*));
 	filtered_image[0] = image_block;
 	for(int i=1; i<pol_height; i++){
 		filtered_image[i] = filtered_image[i-1]+pol_width;
 	}
-	printf("Pol_width: %d, pol_height: %d\n", pol_width, pol_height);	
+	if(verbose == 1) printf("Pol_width: %d, pol_height: %d\n", pol_width, pol_height);	
 	//Do radial median filter to get filtered_image
-	printf("Performing Radial Filter on polar image... \n");
+	if(verbose == 1) printf("Performing Radial Filter on polar image... \n");
 	clock_t start_median = clock();
 		
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad, ring_width, pol_width, pol_height);
@@ -172,11 +172,11 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
 	
 	clock_t end_median = clock();
-	printf("Time for median filter: %f sec \n", (float(end_median - start_median)/CLOCKS_PER_SEC));
+	if(verbose == 1) printf("Time for median filter: %f sec \n", (float(end_median - start_median)/CLOCKS_PER_SEC));
 
 	//subtract filtered image from polar image to get difference image & do last thresholding
 
-	printf("Calculating Difference Image... \n");
+	if(verbose == 1) printf("Calculating Difference Image... \n");
 	for(int row = 0; row < pol_height; row++){
 		for(int col = 0; col <  pol_width; col++){
 			polar_image[0][row][col] -= filtered_image[row][col];
@@ -190,7 +190,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	 * using different kernel sizes for the different regions of the image (based on radius)
 	 */
 
-	printf("Performing Azimuthal mean filter... \n");
+	if(verbose == 1) printf("Performing Azimuthal mean filter... \n");
 	clock_t start_mean = clock();
 
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi, pol_width, pol_height);
@@ -198,9 +198,9 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi/3, pol_width, pol_height);
 
 	clock_t end_mean = clock();
-	printf("Time for mean filtering: %f sec\n", (float(end_mean-start_mean)/CLOCKS_PER_SEC));
+	if(verbose == 1) printf("Time for mean filtering: %f sec\n", (float(end_mean-start_mean)/CLOCKS_PER_SEC));
 
-	printf("Setting polar image equal to final ring image.. \n");
+	if(verbose == 1) printf("Setting polar image equal to final ring image.. \n");
 	//Set "polar_image" to the fully filtered data
 	for(int row = 0; row < pol_height; row++){
 		for(int col = 0; col < pol_width; col++){
@@ -290,25 +290,25 @@ int main(int argc, char** argv){
 				return 1;
 			}
 			//Translate Image to Polar Coordinates
-			printf("Performing Polar Transformation...\n");
+			if(verbose == 1) printf("Performing Polar Transformation...\n");
 			clock_t start_polar = clock();
 			polar_image = transform_machine->polarTransformBilinear(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min);
 			clock_t end_polar = clock();
-			printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
+			if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
 			
 			//Call Ring Algorithm
 
-			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine);
+			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
 						
 			//Translate Ring-Image to Cartesian Coordinates
-			printf("Doing inverse polar transform...\n");
+			if(verbose == 1) printf("Doing inverse polar transform...\n");
 			clock_t start_invpol = clock();
 			ring_image = transform_machine->inversePolarTransformBilinear(polar_image, center_x, center_y, pol_width, pol_height, width, height);
 			clock_t end_invpol = clock();
-			printf("Time for Inverse Polar Transform: %f sec\n", (float(end_invpol - start_invpol)/CLOCKS_PER_SEC));
+			if(verbose == 1) printf("Time for Inverse Polar Transform: %f sec\n", (float(end_invpol - start_invpol)/CLOCKS_PER_SEC));
 
 			//Subtract Ring-Image from Image
-			printf("Subtracting rings from original image...\n");	
+			if(verbose == 1) printf("Subtracting rings from original image...\n");	
 			for(int row=0; row < height; row++){
 				for(int col=0; col < width; col++){
 					image[row][col] -= ring_image[row][col];
@@ -316,10 +316,10 @@ int main(int argc, char** argv){
 			}
 	
 			//Write out Corrected-Image
-			printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
+			if(verbose == 1) printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
 			tiff_io->writeFloatImage(image, output_path + output_name, width, height);
 			clock_t end = clock();
-			printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
+			if(verbose == 1) printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
 			free(ring_image[0]);
 			free(ring_image);
 			free(polar_image[0]);
