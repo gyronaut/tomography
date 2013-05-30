@@ -47,6 +47,69 @@ void ImageFilterClass::quickSort(float* median_array, int left, int right)
 }
 
 
+void ImageFilterClass::doMedianFilterFast1D(float *** filtered_image, float*** image, int start_row,
+										int start_col, int end_row, int end_col, char axis, 
+										int kernel_rad,	int filter_width, int width, int height)
+{
+	int row, col;
+	float* median_array = (float*) calloc(2*kernel_rad+1, sizeof(float));
+	if(axis == 'x'){
+		for(row = start_row; row <= end_row; row++){
+			col = start_col;
+			for(int n = -kernel_rad; n < kernel_rad + 1; n++){
+				int adjusted_col = col + n;
+				int adjusted_row = row;
+				if(adjusted_col < 0){
+					adjusted_col = -adjusted_col;
+					if(row < height/2){
+						adjusted_row += height/2;
+					}else{
+						adjusted_row -= height/2;
+					}
+					median_array[n+kernel_rad] = image[0][adjusted_row][adjusted_col];
+				}else if(adjusted_col >= width){
+					median_array[n+kernel_rad] = 0.0;
+				}else{
+					median_array[n+kernel_rad] = image[0][row][adjusted_col];
+				}
+			}
+			//Sort the array
+			quickSort(median_array, 0, 2*kernel_rad);
+			filtered_image[0][row][col] = median_array[kernel_rad];
+			for(col = start_col+1; col <= end_col; col++){
+				
+			}
+		}
+	}else if(axis == 'y'){
+		for(col = start_col; col <= end_col; col++){
+			for(row = start_row; row <= end_row; row++){
+				for(int n = -kernel_rad; n < kernel_rad + 1; n++){
+					int subsampl_row = row + round(float(n)*float(filter_width)/float(2*kernel_rad));
+					//Dealing with edge cases - need to make this a bit more elegant...
+					if(subsampl_row < 0){
+						/*adjusted_col = -adjusted_col;
+						if(row < height/2){
+							row += height/2;
+						}else{
+							row -= height/2;
+						}
+						median_array[n+kernel_rad] = image[0][row][adjusted_col];
+						*/
+					}else if(subsampl_row= width){
+						median_array[n+kernel_rad] = 0.0;
+					}else{
+						median_array[n+kernel_rad] = image[0][subsampl_row][col];
+					}
+				}
+				//Sort the array - this part is REALLY slow right now... why is that?
+				quickSort(median_array, 0, 2*kernel_rad);
+				filtered_image[0][row][col] = median_array[kernel_rad];
+			}
+		}
+	}
+}
+
+
 void ImageFilterClass::doMedianFilter1D(float *** filtered_image, float*** image, int start_row,
 										int start_col, int end_row, int end_col, char axis, 
 										int kernel_rad,	int filter_width, int width, int height)
