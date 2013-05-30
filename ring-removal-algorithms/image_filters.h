@@ -15,8 +15,12 @@
  private:
 	int round(float x);
 	void elemSwap(float* arr, int index1, int index2);
+	void elemSwapInteger(int* arr, int index1, int index2);
 	int partition(float* median_array, int left, int right, int pivot_index);
+	int partition2Arrays(float* median_array, int* position_array, int left, int right, int pivot_index);
 	void quickSort(float* median_array, int left, int right);
+	void quickSort2Arrays(float* median_array, int* position_array, int left, int right);
+	void bubbleIntoPosition2Arrays(float* median_array, int* position_array, int index, int length);
 	
  public:
 	
