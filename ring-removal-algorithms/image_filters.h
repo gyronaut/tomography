@@ -28,6 +28,7 @@
 	~ImageFilterClass();
 	void doMedianFilter1D(float *** filtered_image, float*** image, int start_row, int start_col,
 						  int end_row, int end_col, char axis, int kernel_rad, int filter_width,
+						  int width, int height);
 	void doMedianFilterFast1D(float *** filtered_image, float*** image, int start_row, int start_col,
 						  int end_row, int end_col, char axis, int kernel_rad, int filter_width,
 						  int width, int height);

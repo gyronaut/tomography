@@ -23,7 +23,7 @@ int ImageTransformClass::findMinDistanceToEdge(float center_x, float center_y, i
 }
 
 int ImageTransformClass::round(float x){
-	return (x > 0.0) ? floor(x+0.5) : ceil(x+0.5);
+	return (x != 0.0) ? floor(x+0.5) : 0;
 }
 
 float** ImageTransformClass::polarTransform(float** image, float center_x, float center_y, int width,

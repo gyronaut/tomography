@@ -12,7 +12,11 @@ ImageFilterClass::~ImageFilterClass()
 
 int ImageFilterClass::round(float x)
 {
-	return (x > 0.0) ? floor(x+0.5) : ceil(x+0.5);
+	if(x != 0.0){
+		return floor(x+0.5);
+	}else{
+		return 0;
+	}
 }
 
 void ImageFilterClass::elemSwap(float* arr, int index1, int index2)
@@ -75,14 +79,14 @@ void ImageFilterClass::quickSort2Arrays(float* median_array, int* position_array
 {
 	if(left < right){
 		int pivot_index = int((left + right)/2);
-		int new_pivot_index = partition_2(median_array, position_array, left, right, pivot_index);
+		int new_pivot_index = partition2Arrays(median_array, position_array, left, right, pivot_index);
 		quickSort2Arrays(median_array, position_array, left, new_pivot_index - 1);
 		quickSort2Arrays(median_array, position_array, new_pivot_index + 1, right);
 	}
 }
 void ImageFilterClass::bubbleIntoPosition2Arrays(float* median_array, int* position_array, int index, int length)
 {
-	if(index < length - 1 && index > 0){
+	if(index > 0 && index < length -1){
 		if(median_array[index] < median_array[index-1]){
 			elemSwap(median_array, index, index-1);
 			elemSwapInteger(position_array, index, index-1);
@@ -90,7 +94,19 @@ void ImageFilterClass::bubbleIntoPosition2Arrays(float* median_array, int* posit
 		}else if(median_array[index] > median_array[index+1]){
 			elemSwap(median_array, index, index+1);
 			elemSwapInteger(position_array, index, index+1);
-			bubbleIntoPosition(median_array, position_array, index+1, length);
+			bubbleIntoPosition2Arrays(median_array, position_array, index+1, length);
+		}
+	}else if(index == 0){
+		if(median_array[index] > median_array[index+1]){
+			elemSwap(median_array, index, index+1);
+			elemSwapInteger(position_array, index, index+1);
+			bubbleIntoPosition2Arrays(median_array, position_array, index+1, length);
+		}
+	}else if(index == length -1){
+		 if(median_array[index] < median_array[index-1]){
+			elemSwap(median_array, index, index-1);
+			elemSwapInteger(position_array, index, index-1);
+			bubbleIntoPosition2Arrays(median_array, position_array, index-1, length);
 		}
 	}
 }
@@ -126,11 +142,9 @@ void ImageFilterClass::doMedianFilterFast1D(float *** filtered_image, float*** i
 			
 			//Roll filter along the rest of the row
 			for(col = start_col+1; col <= end_col; col++){
-				float next_value;
+				float next_value = 0.0;
 				int next_value_col = col + kernel_rad;
-				if (next_value_col >= width){
-					next_value = 0.0;
-				}else{
+				if (next_value_col < width){
 					next_value = image[0][row][next_value_col];
 				}
 				float last_value;
@@ -141,7 +155,7 @@ void ImageFilterClass::doMedianFilterFast1D(float *** filtered_image, float*** i
 						last_value_index = i;
 						last_value = median_array[i];
 						position_array[i] = 2*kernel_rad;
-						median_array[i] = next_value
+						median_array[i] = next_value;
 					}
 				}
 				bubbleIntoPosition2Arrays(median_array, position_array, last_value_index, 2*kernel_rad+1);
@@ -188,7 +202,7 @@ void ImageFilterClass::doMedianFilter1D(float *** filtered_image, float*** image
 		for(row = start_row; row <= end_row; row++){
 			for(col = start_col; col <= end_col; col++){
 				for(int n = -kernel_rad; n < kernel_rad + 1; n++){
-					int subsampl_col = col + round(float(n)*float(filter_width)/float(2*kernel_rad));
+					int subsampl_col = col + round(float(n)*float(filter_width)/float((2.0*kernel_rad)+1.0));
 					int adjusted_row = row;
 					if(subsampl_col < 0){
 						subsampl_col = -subsampl_col;
