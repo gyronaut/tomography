@@ -77,6 +77,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 			polar_image[0][row][col] = filtered_image[row][col];
 		}
 	}
+
 	free(image_block);
 	free(filtered_image);
 }
@@ -116,14 +117,14 @@ int main(int argc, char** argv){
 		int pol_width=0;
 		int pol_height=0;
 		int m_rad = 30;
-		int m_azi = 60;
+		int m_azi = 60*5;
 		int ring_width = 25;
 		string input_base, input_name, input_path;
 		string output_base, output_name, output_path;
 		//default values for lego only
-//		float center_x=511, center_y=511, thresh_max=0.0015, thresh_min=0.00005, threshold = 0.00034;
+		float center_x=511, center_y=511, thresh_max=0.0015, thresh_min=0.00025, threshold = 0.00034;
 		//defualt values for large rings only
-		float center_x=1240.5, center_y=1240.5, thresh_max = 20, thresh_min = -20, threshold = 6;
+		//float center_x=1240.5, center_y=1240.5, thresh_max = 20, thresh_min = -20, threshold = 6;
 
 		char * filter;
 		
@@ -172,7 +173,7 @@ int main(int argc, char** argv){
 			
 			//Call Ring Algorithm
 
-			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
+//			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
 						
 			//Translate Ring-Image to Cartesian Coordinates
 			if(verbose == 1) printf("Doing inverse polar transform...\n");
@@ -191,7 +192,7 @@ int main(int argc, char** argv){
 	
 			//Write out Corrected-Image
 			if(verbose == 1) printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
-			tiff_io->writeFloatImage(image, output_path + output_name, width, height);
+			tiff_io->writeFloatImage(ring_image, output_path + output_name, width, height);
 			clock_t end = clock();
 			if(verbose == 1) printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
 			free(ring_image[0]);

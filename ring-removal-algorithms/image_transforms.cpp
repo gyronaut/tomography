@@ -67,7 +67,7 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 {
 	int max_r = findMinDistanceToEdge(center_x, center_y, width, height);
 	int pol_width = max_r;
-	int pol_height = round(4.0*PI*float(max_r));
+	int pol_height = round(6.0*PI*float(max_r));
 	
 	*p_pol_width = pol_width;
 	*p_pol_height = pol_height;
@@ -84,7 +84,7 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 	for(int row = 0; row<pol_height; row++){
 		for(int r = 0; r<pol_width; r++){
 			//float theta = float(row)/float(*pol_height)*3.0*PI - PI/2.0; //gives theta in the range [-PI/2, 5PI/2]
-			theta = float(row)/float(2.0*max_r);
+			theta = float(row)*2.0*PI/float(pol_height);
 			fl_x = float(r)*cos(theta) + float(center_x);
 			fl_y = float(r)*sin(theta) + float(center_y);
 			x_1 = floor(fl_x);
@@ -102,12 +102,14 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 			}else{
 				value = (y_2 - fl_y)*((x_2 - fl_x)*image[y_1][x_1] + (fl_x - x_1)*image[y_1][x_2]) + (fl_y - y_1)*((x_2 - fl_x)*image[y_2][x_1] + (fl_x - x_1)*image[y_2][x_2]);
 			}
+						
 			polar_image[row][r] = value;
-			if(polar_image[row][r] > thresh_max){
+		/*	if(polar_image[row][r] > thresh_max){
 				polar_image[row][r] = thresh_max;
 			}else if(polar_image[row][r] < thresh_min){
 				polar_image[row][r] = thresh_min;
 			}
+			*/
 		}
 	}
 
@@ -146,8 +148,8 @@ float** ImageTransformClass::inversePolarTransformBilinear(float** polar_image, 
 	for(int i = 1; i < height; i++){
 		cart_image[i] = cart_image[i-1]+width;
 	}
-	float r, theta, value, row_float;
-	int col_1, col_2, row_1, row_2, row_floor, row_ceil;
+	float r, theta, upper_theta, lower_theta, delta_theta, value, row_float;
+	int col_1, col_2, row_1, row_2;
 	for(int y = 0; y < height; y++){
 		for(int x = 0; x < width; x++){
 			value = 0;
@@ -159,26 +161,30 @@ float** ImageTransformClass::inversePolarTransformBilinear(float** polar_image, 
 				if(theta < 0){
 					theta += 2*PI;
 				}
-				row_float = theta*float(pol_height -1)/(2.0*PI);
-				if(row_float > pol_height){
+				row_float = theta*float(pol_height)/(2.0*PI);
+			/*	if(row_float >= pol_height){
 					row_float -= pol_height;
-				}
-				row_floor = floor(row_float);
-				row_ceil = ceil(row_float);
-				row_1 = row_floor%(pol_height);
-				row_2 = row_ceil%(pol_height);
+				}*/
+				delta_theta = 2.0*PI/float(pol_height);
+				lower_theta = float(floor(row_float))*2.0*PI/float(pol_height);
+				upper_theta = float(ceil(row_float))*2.0*PI/float(pol_height);
+				row_1 = int(floor(row_float))%(pol_height);
+				row_2 = int(ceil(row_float))%(pol_height);
 				if(col_1 == col_2){
 					if(row_1 == row_2){
 						value = polar_image[row_1][col_1];
 					}else{
-						value = (row_ceil - row_float)*polar_image[row_1][col_1] + (row_float - row_floor)*polar_image[row_2][col_1];
+						value = (col_2*(upper_theta - theta)*polar_image[row_1][col_1] + col_1*(theta - lower_theta)*polar_image[row_2][col_1])/(col_1*delta_theta);
 					}
 				}else if(row_1 == row_2){
-						value = (col_2 - r)*polar_image[row_1][col_1] + (r - col_1)*polar_image[row_1][col_2];
+					value = (col_2 - r)*polar_image[row_1][col_1] + (r - col_1)*polar_image[row_1][col_2];
 				}else{
-					value = (row_ceil - row_float)*((col_2 - r)*polar_image[row_1][col_1] + (r - col_1)*polar_image[row_1][col_2]) + (row_float - row_floor)*((col_2 - r)*polar_image[row_2][col_1] + (r - col_1)*polar_image[row_2][col_2]);
+					value = ((upper_theta - theta)*((col_2*col_2 - r*r)*polar_image[row_1][col_1] + (r*r - col_1*col_1)*polar_image[row_1][col_2]) + (theta - lower_theta)*((col_2*col_2 - r*r)*polar_image[row_2][col_1] + (r*r - col_1*col_1)*polar_image[row_2][col_2]))/((col_2*col_2 - col_1*col_1)*delta_theta);
 				}
 			}
+/*			if(y == 500 && (x>=500 && x<=550)){
+				printf("(%d, %d), (%d, %d) %f\n", col_1, row_1, col_2, row_2, value);
+			}*/
 			cart_image[y][x] = value;	
 		}
 	}
