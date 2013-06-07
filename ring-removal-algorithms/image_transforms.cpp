@@ -9,8 +9,8 @@ int ImageTransformClass::findMinDistanceToEdge(float center_x, float center_y, i
 											   int height)
 {
 	int* dist = new int[4];
-	dist[0] = center_x;
-	dist[1] = center_y;
+	dist[0] = center_x+1;
+	dist[1] = center_y+1;
 	dist[2] = width - center_x;
 	dist[3] = height - center_y;
 	int min = dist[0];
@@ -66,9 +66,8 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 													float thresh_min)
 {
 	int max_r = findMinDistanceToEdge(center_x, center_y, width, height);
-	int pol_width = max_r;
-	int pol_height = round(6.0*PI*float(max_r));
-	
+	int pol_width = 5*max_r;
+	int pol_height = round(2.0*PI*float(max_r - 1.0));
 	*p_pol_width = pol_width;
 	*p_pol_height = pol_height;
 
@@ -85,12 +84,14 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 		for(int r = 0; r<pol_width; r++){
 			//float theta = float(row)/float(*pol_height)*3.0*PI - PI/2.0; //gives theta in the range [-PI/2, 5PI/2]
 			theta = float(row)*2.0*PI/float(pol_height);
-			fl_x = float(r)*cos(theta) + float(center_x);
-			fl_y = float(r)*sin(theta) + float(center_y);
+			fl_x = float(r)*cos(theta)/5.0 + float(center_x);
+			fl_y = float(r)*sin(theta)/5.0 + float(center_y);
 			x_1 = floor(fl_x);
 			x_2 = ceil(fl_x);
 			y_1 = floor(fl_y);
 			y_2 = ceil(fl_y);
+			value = 0;
+			if(x_2 < width && y_2 < height && y_1 >= 0 && x_1 >= 0){
 			if(x_1 == x_2){
 				if(y_1 ==y_2){
 					value = image[y_1][x_1];
@@ -102,13 +103,14 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 			}else{
 				value = (y_2 - fl_y)*((x_2 - fl_x)*image[y_1][x_1] + (fl_x - x_1)*image[y_1][x_2]) + (fl_y - y_1)*((x_2 - fl_x)*image[y_2][x_1] + (fl_x - x_1)*image[y_2][x_2]);
 			}
-						
+			}			
 			polar_image[row][r] = value;
 		/*	if(polar_image[row][r] > thresh_max){
 				polar_image[row][r] = thresh_max;
 			}else if(polar_image[row][r] < thresh_min){
 				polar_image[row][r] = thresh_min;
 			}
+
 			*/
 		}
 	}
@@ -153,7 +155,7 @@ float** ImageTransformClass::inversePolarTransformBilinear(float** polar_image, 
 	for(int y = 0; y < height; y++){
 		for(int x = 0; x < width; x++){
 			value = 0;
-			r = sqrt(float((x - center_x)*(x - center_x)) + float((y - center_y)*(y - center_y)));
+			r = 5.0*sqrt(float((x - center_x)*(x - center_x)) + float((y - center_y)*(y - center_y)));
 			if(r < pol_width - 1){
 				col_1 = floor(r);
 				col_2 = ceil(r);
