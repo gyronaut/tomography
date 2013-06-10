@@ -164,30 +164,45 @@ void ImageFilterClass::doMedianFilterFast1D(float *** filtered_image, float*** i
 		}
 	}else if(axis == 'y'){
 		for(col = start_col; col <= end_col; col++){
-			for(row = start_row; row <= end_row; row++){
-				for(int n = -kernel_rad; n < kernel_rad + 1; n++){
-					int subsampl_row = row + round(float(n)*float(filter_width)/float(2*kernel_rad));
-					//Dealing with edge cases - need to make this a bit more elegant...
-					if(subsampl_row < 0){
-						/*adjusted_col = -adjusted_col;
-						if(row < height/2){
-							row += height/2;
-						}else{
-							row -= height/2;
-						}
-						median_array[n+kernel_rad] = image[0][row][adjusted_col];
-						*/
-					}else if(subsampl_row= width){
-						median_array[n+kernel_rad] = 0.0;
-					}else{
-						median_array[n+kernel_rad] = image[0][subsampl_row][col];
+			row = start_row;
+			for(int n = -kernel_rad; n < kernel_rad + 1; n++){
+				int adjusted_row = row + n;
+				int adjusted_col = col;
+				if(adjusted_row < 0){
+				// Handle edge cases 
+					adjusted_row += height;
+					median_array[n+kernel_rad] = image[0][adjusted_row][adjusted_col];
+				}else{
+					median_array[n+kernel_rad] = image[0][adjusted_row][adjusted_col];
+				}
+				position_array[n+kernel_rad] = n+kernel_rad;
+			}
+			//Sort the array
+			quickSort2Arrays(median_array, position_array, 0, 2*kernel_rad);
+			filtered_image[0][row][col] = median_array[kernel_rad];
+			
+			//Roll filter along the rest of the col
+			for(row = start_row+1; row <= end_row; row++){
+				float next_value = 0.0;
+				int next_value_row = row + kernel_rad;
+				if (next_value_row < height){
+					next_value = image[0][next_value_row][col];
+				}
+				float last_value;
+				int last_value_index; 
+				for(int i = 0; i < 2*kernel_rad+1; i++){
+					position_array[i] -= 1;
+					if(position_array[i] < 0){
+						last_value_index = i;
+						last_value = median_array[i];
+						position_array[i] = 2*kernel_rad;
+						median_array[i] = next_value;
 					}
 				}
-				//Sort the array - this part is REALLY slow right now... why is that?
-				quickSort(median_array, 0, 2*kernel_rad);
+				bubbleIntoPosition2Arrays(median_array, position_array, last_value_index, 2*kernel_rad+1);
 				filtered_image[0][row][col] = median_array[kernel_rad];
 			}
-		}
+		}	
 	}
 }
 
