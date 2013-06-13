@@ -61,13 +61,14 @@ float** ImageTransformClass::polarTransform(float** image, float center_x, float
 
 /*Polar transform that uses simple bilinear interpolation to translate from (x,y) to (r, theta)*/
 float** ImageTransformClass::polarTransformBilinear(float** image, float center_x, float center_y,
-													int width, int height, int* p_pol_width,
-													int* p_pol_height, float thresh_max,
-													float thresh_min)
+                                                    int width, int height, int* p_pol_width,
+                                                    int* p_pol_height, float thresh_max,
+                                                    float thresh_min, int r_scale, int ang_scale,
+                                                    int overhang)
 {
 	int max_r = findMinDistanceToEdge(center_x, center_y, width, height);
-	int pol_width = 5*max_r;
-	int pol_height = round(2.0*PI*float(max_r - 1.0));
+	int pol_width = r_scale*max_r;
+	int pol_height = round(ang_scale*2.0*PI*float(max_r - 1.0));
 	*p_pol_width = pol_width;
 	*p_pol_height = pol_height;
 
@@ -84,8 +85,8 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 		for(int r = 0; r<pol_width; r++){
 			//float theta = float(row)/float(*pol_height)*3.0*PI - PI/2.0; //gives theta in the range [-PI/2, 5PI/2]
 			theta = float(row)*2.0*PI/float(pol_height);
-			fl_x = float(r)*cos(theta)/5.0 + float(center_x);
-			fl_y = float(r)*sin(theta)/5.0 + float(center_y);
+			fl_x = float(r)*cos(theta)/r_scale + float(center_x);
+			fl_y = float(r)*sin(theta)/r_scale + float(center_y);
 			x_1 = floor(fl_x);
 			x_2 = ceil(fl_x);
 			y_1 = floor(fl_y);
@@ -119,8 +120,8 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 }
 
 float** ImageTransformClass::inversePolarTransform(float** polar_image, float center_x,
-												  float center_y, int pol_width, int  pol_height,
-												  int width, int height)
+                                                   float center_y, int pol_width, int  pol_height,
+                                                   int width, int height)
 {
 	float** cart_image = (float **) calloc(height, sizeof(float *));
 	for(int i = 0; i < height; i++){
@@ -142,7 +143,8 @@ float** ImageTransformClass::inversePolarTransform(float** polar_image, float ce
 /*Inverse polar transform that uses simple bilinear interpolation to translate from (r, theta) to (x, y)*/
 float** ImageTransformClass::inversePolarTransformBilinear(float** polar_image, float center_x,
                                                            float center_y, int pol_width,
-                                                           int pol_height, int width, int height)
+                                                           int pol_height, int width, int height,
+                                                           int r_scale, int overhang)
 {
 	float* image_block = (float *) calloc(height*width, sizeof(float));
 	float** cart_image = (float **) calloc(height, sizeof(float *));
@@ -155,7 +157,7 @@ float** ImageTransformClass::inversePolarTransformBilinear(float** polar_image, 
 	for(int y = 0; y < height; y++){
 		for(int x = 0; x < width; x++){
 			value = 0;
-			r = 5.0*sqrt(float((x - center_x)*(x - center_x)) + float((y - center_y)*(y - center_y)));
+			r = r_scale*sqrt(float((x - center_x)*(x - center_x)) + float((y - center_y)*(y - center_y)));
 			if(r < pol_width - 1){
 				col_1 = floor(r);
 				col_2 = ceil(r);

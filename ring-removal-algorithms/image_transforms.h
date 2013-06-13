@@ -22,14 +22,15 @@
 	ImageTransformClass();
 	~ImageTransformClass();
 	float** polarTransform(float** image, float center_x, float center_y, int width, int height,
-						   int* pol_width, int* pol_height, float thresh_max, float thresh_min);
+                               int* pol_width, int* pol_height, float thresh_max, float thresh_min);
 	float** polarTransformBilinear(float** image, float center_x, float center_y, int width,
-								   int height, int* pol_width, int* pol_height, float thresh_max,
-								   float thresh_min);
+                                       int height, int* pol_width, int* pol_height, float thresh_max,
+                                       float thresh_min, int r_scale, int ang_scale, int overhang);
 	float** inversePolarTransform(float** polar_image, float center_x, float center_y,
-								  int pol_width, int  pol_height, int width, int height);
+                                      int pol_width, int  pol_height, int width, int height);
 	float** inversePolarTransformBilinear(float** polar_image, float center_x, float center_y,
-										  int pol_width, int  pol_height, int width, int height);
+                                              int pol_width, int  pol_height, int width, int height,
+                                              int r_scale, int overhang);
 	
  };
  
