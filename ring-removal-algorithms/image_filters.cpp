@@ -367,4 +367,3 @@ void ImageFilterClass::doMeanFilter1D(float*** filtered_image, float*** image, i
 		}
 	}	
 }
->>>>>>> 51a7ddbb73a9c000a21cf4663a8d63c9f2b7d1cc
