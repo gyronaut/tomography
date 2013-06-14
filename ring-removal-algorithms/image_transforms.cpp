@@ -107,13 +107,13 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 			}
 			}			
 			polar_image[row][r] = value;
-		/*	if(polar_image[row][r] > thresh_max){
+			if(polar_image[row][r] > thresh_max){
 				polar_image[row][r] = thresh_max;
 			}else if(polar_image[row][r] < thresh_min){
 				polar_image[row][r] = thresh_min;
 			}
 
-			*/
+			
 		}
 	}
 

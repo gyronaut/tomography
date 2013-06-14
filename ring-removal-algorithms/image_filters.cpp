@@ -336,7 +336,11 @@ void ImageFilterClass::doMeanFilterFast1D(float*** filtered_image, float*** imag
 					next_row -= height;
 				}
 				sum = previous_sum - image[0][last_row][col] + image[0][next_row][col];
-				filtered_image[0][row][col] = sum/num_elems;
+				if(image[0][row][col] != 0){
+					filtered_image[0][row][col] = sum/num_elems;
+				}else{
+					filtered_image[0][row][col] = 0.0;
+				}
 				previous_sum = sum;
 			}
 		}

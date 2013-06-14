@@ -32,15 +32,15 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	if(verbose == 1) printf("Performing Radial Filter on polar image... \n");
 	clock_t start_median = clock();
 
-	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'x', (ring_width -1)/2, ring_width, pol_width, pol_height);	
+//	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'x', (ring_width -1)/2, ring_width, pol_width, pol_height);	
 //	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'x', (ring_width - 1)/2, ring_width, pol_width, pol_height);
-/*		
-	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad, ring_width, pol_width, pol_height);
+		
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad, ring_width, pol_width, pol_height);
 
-	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
 
-	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
-*/	
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
+	
 	clock_t end_median = clock();
 	if(verbose == 1) printf("Time for median filter: %f sec \n", (float(end_median - start_median)/CLOCKS_PER_SEC));
 
@@ -51,6 +51,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 		for(int col = 0; col <  pol_width; col++){
 			polar_image[0][row][col] -= filtered_image[row][col];
 			if(polar_image[0][row][col] > threshold || polar_image[0][row][col] < -threshold){
+	//		if(polar_image[0][row][col] < threshold){
 				polar_image[0][row][col] = 0;
 			}
 		}
@@ -63,9 +64,9 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	if(verbose == 1) printf("Performing Azimuthal mean filter... \n");
 	clock_t start_mean = clock();
 
-	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi, pol_width, pol_height);
+	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3, pol_width, pol_height);
-	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi/3, pol_width, pol_height);
+	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi, pol_width, pol_height);
 
 	clock_t end_mean = clock();
 	if(verbose == 1) printf("Time for mean filtering: %f sec\n", (float(end_mean-start_mean)/CLOCKS_PER_SEC));
@@ -90,8 +91,8 @@ string getName(string name_base, int img_num){
 }
 
 int main(int argc, char** argv){
-	if(!(argc == 12)){
-		printf("\nUsage:\n\nring_remover_recon [input path] [output path] [input root] [output root] [first file num] [last file num] [center x y] [max ring width] [ring threshold] [verbose]\n\n");
+	if(!(argc == 15)){
+		printf("\nUsage:\n\nring_remover_recon [input path] [output path] [input root] [output root] [first file num] [last file num] [center x y] [max ring width] [thresh min max] [ring threshold] [angular min] [verbose]\n\n");
 		printf("      [input path]    Path to the folder containing the input images.\n");
 		printf("     [output path]    Path to the folder to hold the filtered images.\n");
 		printf("   [sinogram root]    Root name of the image to filter, with no file\n");
@@ -102,9 +103,12 @@ int main(int argc, char** argv){
 		printf("   [last file num]    Number of last sinogram to reconstruct.\n");
 		printf("    [center: x, y]    X and Y value of the center of rotation\n");
 		printf("  [max ring width]    maximum width of the rings to be filtered in pixels.\n");
+		printf("  [thresh min max]    min and max values for portion of image to filter.\n");
 		printf("  [ring threshold]    Rings are treated as offsets to the corrected image. This\n");
 		printf("                      threshold is the maximum value of an offset due to a\n");
 		printf("                      ring artifact.\n");
+		printf("     [angular min]    minimum angle in degrees (int) to be considered ring artifact\n");
+		printf("                      (values around 10 degrees seem to work well).\n");
 		printf("         [verbose]    0 = No Output messages (default), 1 = Output messages\n");
 		return 0;
 	}else{
@@ -118,13 +122,14 @@ int main(int argc, char** argv){
 		int pol_height=0;
 		int m_rad = 30;
 		int m_azi;
+		int angular_min;
 		int ring_width = 25;
 		int r_scale = 2;
 		int ang_scale = 2;
 		string input_base, input_name, input_path;
 		string output_base, output_name, output_path;
 	//	default values for lego only
-		float center_x=511, center_y=511, thresh_max=0.0015, thresh_min=0.0004, threshold = 0.00034;
+		float center_x=511, center_y=511, thresh_max=0.0018, thresh_min=0.0006, threshold = 0.00034;
 	//	defualt values for large rings only
 	//	float center_x=1240.5, center_y=1240.5, thresh_max = 20, thresh_min = -20, threshold = 6;
 	//	default values for test case:
@@ -150,8 +155,11 @@ int main(int argc, char** argv){
 		center_x = atof(argv[7]);
 		center_y = atof(argv[8]);
 		ring_width = atoi(argv[9])*r_scale;
-		threshold = atof(argv[10]);
-		verbose = atoi(argv[11]);
+		thresh_min = atof(argv[10]);
+		thresh_max = atof(argv[11]);
+		threshold = atof(argv[12]);
+		angular_min = atoi(argv[13]);
+		verbose = atoi(argv[14]);
 
 		for(int img = first_img_num; img < last_img_num + 1; img++){
 
@@ -174,7 +182,7 @@ int main(int argc, char** argv){
 			polar_image = transform_machine->polarTransform(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
 			clock_t end_polar = clock();
 			if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
-			m_azi = ceil(float(pol_height)/(360.0))*5;	
+			m_azi = ceil(float(pol_height)/(360.0))*angular_min;	
 			//Call Ring Algorithm
 
 			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
