@@ -6,10 +6,8 @@
 #include <cstdio>
 #include <cmath>
 #include "time.h"
-#include "tiff.h"
-#include "tiffio.h"
 
-#include "tiff_io.h"
+#include "tiff_io-win.h"
 #include "image_transforms.h"
 #include "image_filters.h"
 
@@ -95,20 +93,19 @@ int main(int argc, char** argv){
 		printf("\nUsage:\n\nring_remover_recon [input path] [output path] [input root] [output root] [first file num] [last file num] [center x y] [max ring width] [thresh min max] [ring threshold] [angular min] [verbose]\n\n");
 		printf("      [input path]    Path to the folder containing the input images.\n");
 		printf("     [output path]    Path to the folder to hold the filtered images.\n");
-		printf("   [sinogram root]    Root name of the image to filter, with no file\n");
+		printf(" [input file root]    Root name of the image to filter, with no file\n");
 		printf("                      number or extension.\n");
 		printf("[output file root]    Root of the output file name (number and file extension\n");
 		printf("                      will be appended to this).\n");
-		printf("  [first file num]    Number of first sinogram to reconstruct.\n");
-		printf("   [last file num]    Number of last sinogram to reconstruct.\n");
-		printf("    [center: x, y]    X and Y value of the center of rotation\n");
-		printf("  [max ring width]    maximum width of the rings to be filtered in pixels.\n");
-		printf("  [thresh min max]    min and max values for portion of image to filter.\n");
+		printf("  [first file num]    Number of first file to filter.\n");
+		printf("   [last file num]    Number of last file to filter.\n");
+		printf("    [center: x, y]    X and Y value of the center of rotation (floats)\n");
+		printf("  [max ring width]    maximum width of the rings to be filtered in pixels (int).\n");
+		printf("  [thresh min max]    min and max values for portion of image to filter (floats).\n");
 		printf("  [ring threshold]    Rings are treated as offsets to the corrected image. This\n");
 		printf("                      threshold is the maximum value of an offset due to a\n");
-		printf("                      ring artifact.\n");
+		printf("                      ring artifact (float).\n");
 		printf("     [angular min]    minimum angle in degrees (int) to be considered ring artifact\n");
-		printf("                      (values around 10 degrees seem to work well).\n");
 		printf("         [verbose]    0 = No Output messages (default), 1 = Output messages\n");
 		return 0;
 	}else{
