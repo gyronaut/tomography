@@ -1,4 +1,3 @@
-
 #include <string>
 #include <algorithm>
 #include <sstream>
@@ -7,7 +6,8 @@
 #include <cmath>
 #include "time.h"
 
-#include "tiff_io-win.h"
+//#include "tiff_io-win.h"
+#include "tiff_io.h"
 #include "image_transforms.h"
 #include "image_filters.h"
 
