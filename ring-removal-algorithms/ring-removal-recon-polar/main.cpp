@@ -7,7 +7,8 @@
 #include <cmath>
 #include "time.h"
 
-#include "tiff_io-win.h"
+//#include "tiff_io-win.h"
+#include "tiff_io.h"
 #include "image_transforms.h"
 #include "image_filters.h"
 
@@ -109,6 +110,9 @@ int main(int argc, char** argv){
 		printf("         [verbose]    0 = No Output messages (default), 1 = Output messages\n");
 		return 0;
 	}else{
+		TIFFSetWarningHandler(NULL);
+		TIFFSetErrorHandler(NULL);
+
 		int first_img_num;
 		int last_img_num;
 		int verbose;
@@ -158,6 +162,28 @@ int main(int argc, char** argv){
 		angular_min = atoi(argv[13]);
 		verbose = atoi(argv[14]);
 
+		//Checks for correct input parameters:
+		if(first_img_num < 0 || first_img_num > last_img_num){
+			fprintf(stderr, "Error:  illegal use of image number parameters. Call program with no arguments to see proper usage.\n");
+			return 1;
+		}
+		if(ring_width < 0){
+			fprintf(stderr, "Error: ring width was input as negative number. Call program with no arguments to see proper usage.\n");
+			return 1;
+		}
+		if(thresh_min >= thresh_max){
+			fprintf(stderr, "Error: thresh_min is greater than or equal to thresh_max. Call program with no arguments to see proper usage.\n");
+			return 1;
+		}
+		if(angular_min < 0 || angular_min > 360){
+			fprintf(stderr, "Error: illegal use of angular_min parameter.  Call program with no arguments to see proper usage.\n");
+			return 1;
+		}
+		if(verbose != 0 && verbose !=1){
+			verbose = 0;
+		}
+
+		//do ring removal for all images
 		for(int img = first_img_num; img < last_img_num + 1; img++){
 
 			clock_t start = clock();
@@ -170,48 +196,54 @@ int main(int argc, char** argv){
 			image = tiff_io->readFloatImage(input_path + input_name, &width, &height);    //pixel data is stored in the form image[row][col]
 
 			if(!image){
-				return 1;
-			}
-			//Translate Image to Polar Coordinates
-			if(verbose == 1) printf("Performing Polar Transformation...\n");
-			clock_t start_polar = clock();
-//			polar_image = transform_machine->polarTransformBilinear(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
-			polar_image = transform_machine->polarTransform(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
-			clock_t end_polar = clock();
-			if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
-			m_azi = ceil(float(pol_height)/(360.0))*angular_min;	
-			//Call Ring Algorithm
-
-			doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
-						
-			//Translate Ring-Image to Cartesian Coordinates
-			if(verbose == 1) printf("Doing inverse polar transform...\n");
-			clock_t start_invpol = clock();
-//			ring_image = transform_machine->inversePolarTransformBilinear(polar_image, center_x, center_y, pol_width, pol_height, width, height, r_scale, ring_width);
-			ring_image = transform_machine->inversePolarTransform(polar_image, center_x, center_y, pol_width, pol_height, width, height, r_scale, ring_width);
-			clock_t end_invpol = clock();
-			if(verbose == 1) printf("Time for Inverse Polar Transform: %f sec\n", (float(end_invpol - start_invpol)/CLOCKS_PER_SEC));
-
-			//Subtract Ring-Image from Image
-			if(verbose == 1) printf("Subtracting rings from original image...\n");	
-			for(int row=0; row < height; row++){
-				for(int col=0; col < width; col++){
-					image[row][col] -= ring_image[row][col];
+				fprintf(stderr, "Error: unable to open file %s.\n", input_path+input_name);
+			}else{
+				if(center_x < 0 || center_y < 0 || center_x >= width || center_y >= height){
+					fprintf(stderr, "Error: invalid center value (out of range). Call program with no arguments to see proper usage.\n");
+					return 1;
 				}
-			}
+				//Translate Image to Polar Coordinates
+				if(verbose == 1) printf("Performing Polar Transformation...\n");
+				clock_t start_polar = clock();
+//				polar_image = transform_machine->polarTransformBilinear(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
+				polar_image = transform_machine->polarTransform(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
+				clock_t end_polar = clock();
+				if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
+				m_azi = ceil(float(pol_height)/(360.0))*angular_min;	
+				//Call Ring Algorithm
+
+				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
+						
+				//Translate Ring-Image to Cartesian Coordinates
+				if(verbose == 1) printf("Doing inverse polar transform...\n");
+				clock_t start_invpol = clock();
+//				ring_image = transform_machine->inversePolarTransformBilinear(polar_image, center_x, center_y, pol_width, pol_height, width, height, r_scale, ring_width);
+				ring_image = transform_machine->inversePolarTransform(polar_image, center_x, center_y, pol_width, pol_height, width, height, r_scale, ring_width);
+				clock_t end_invpol = clock();
+				if(verbose == 1) printf("Time for Inverse Polar Transform: %f sec\n", (float(end_invpol - start_invpol)/CLOCKS_PER_SEC));
+
+				//Subtract Ring-Image from Image
+				if(verbose == 1) printf("Subtracting rings from original image...\n");	
+				for(int row=0; row < height; row++){
+					for(int col=0; col < width; col++){
+						image[row][col] -= ring_image[row][col];
+					}
+				}
 	
-			//Write out Corrected-Image
-			if(verbose == 1) printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
-			tiff_io->writeFloatImage(image, output_path + output_name, width, height);
-			clock_t end = clock();
-			if(verbose == 1) printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
-			free(ring_image[0]);
-			free(ring_image);
-			free(polar_image[0]);
-			free(polar_image);
-			free(image[0]);
-			free(image);
+				//Write out Corrected-Image
+				if(verbose == 1) printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
+				tiff_io->writeFloatImage(image, output_path + output_name, width, height);
+				clock_t end = clock();
+				if(verbose == 1) printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
+				free(ring_image[0]);
+				free(ring_image);
+				free(polar_image[0]);
+				free(polar_image);
+				free(image[0]);
+				free(image);
+			}
 		}
+		if(verbose ==1)printf("Ring Removal completed!");
 		return 0;
 	}
 }
