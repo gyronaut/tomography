@@ -97,6 +97,6 @@ void TiffIO::writeFloatImage(float** image_rows, string output_name, int width, 
 	if(tiff_buffer){
 		_TIFFfree(tiff_buffer);
 	}
-	free(buffer);
 	free(output);
+	free(buffer);
 }

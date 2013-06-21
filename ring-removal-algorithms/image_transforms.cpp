@@ -27,22 +27,26 @@ int ImageTransformClass::round(float x){
 }
 
 float** ImageTransformClass::polarTransform(float** image, float center_x, float center_y, int width,
-                                            int height, int* pol_width, int* pol_height,
+                                            int height, int* p_pol_width, int* p_pol_height,
                                             float thresh_max, float thresh_min, int r_scale,
                                             int ang_scale, int overhang)
 {
 	int max_r = findMinDistanceToEdge(center_x, center_y, width, height);
-	*pol_width = r_scale*max_r;
-	*pol_height = round(ang_scale*2.0*PI*float(max_r));
+	int pol_width = r_scale*max_r;
+	int pol_height = round(ang_scale*2.0*PI*float(max_r));
+	*p_pol_width = pol_width;
+	*p_pol_height = pol_height;
 	
-	float** polar_image = (float **) calloc(*pol_height, sizeof(float *));
-	for(int i=0; i<*pol_height; i++){
-		polar_image[i] = (float *) calloc(*pol_width, sizeof(float));
+	float* image_block = (float *) calloc(pol_height*pol_width, sizeof(float));	
+	float** polar_image = (float **) calloc(pol_height, sizeof(float *));
+	polar_image[0] = image_block;
+	for(int i=1; i<pol_height; i++){
+		polar_image[i] = polar_image[i-1] + pol_width;
 	}
-	for(int row = 0; row<*pol_height; row++){
-		for(int r = 0; r < *pol_width; r++){
+	for(int row = 0; row<pol_height; row++){
+		for(int r = 0; r < pol_width; r++){
 			//float theta = float(row)/float(*pol_height)*3.0*PI - PI/2.0; //gives theta in the range [-PI/2, 5PI/2]
-			float theta = float(row)*2.0*PI/float(*pol_height);
+			float theta = float(row)*2.0*PI/float(pol_height);
 			float fl_x = float(r)*cos(theta)/float(r_scale);
 			float fl_y = float(r)*sin(theta)/float(r_scale);
 			int x = round(fl_x + float(center_x));
@@ -146,9 +150,11 @@ float** ImageTransformClass::inversePolarTransform(float** polar_image, float ce
                                                    int width, int height, int r_scale,
                                                    int over_hang)
 {
+	float* image_block = (float *) calloc(height*width, sizeof(float));
 	float** cart_image = (float **) calloc(height, sizeof(float *));
-	for(int i = 0; i < height; i++){
-		cart_image[i] = (float *) calloc(width, sizeof(float));
+	cart_image[0] = image_block;
+	for(int i = 1; i < height; i++){
+		cart_image[i] = cart_image[i-1]+width;
 	}
 	for(int row=0; row < height; row++){
 		for(int col = 0; col < width; col++){

@@ -117,6 +117,9 @@ void ImageFilterClass::doMedianFilterFast1D(float *** filtered_image, float*** i
 	int row, col;
 	float* median_array = (float*) calloc(2*kernel_rad+1, sizeof(float));
 	int* position_array = (int*) calloc(2*kernel_rad+1, sizeof(int));
+	if(median_array == NULL || position_array == NULL){
+		fprintf(stderr, "Error allocating memory for median filter arrays!");
+	}
 	if(axis == 'x'){
 		for(row = start_row; row <= end_row; row++){
 			col = start_col;
@@ -204,6 +207,8 @@ void ImageFilterClass::doMedianFilterFast1D(float *** filtered_image, float*** i
 			}
 		}	
 	}
+	free(median_array);
+	free(position_array);
 }
 
 

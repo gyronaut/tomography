@@ -6,8 +6,8 @@
 #include <cmath>
 #include "time.h"
 
-//#include "tiff_io-win.h"
-#include "tiff_io.h"
+#include "tiff_io-win.h"
+//#include "tiff_io.h"
 #include "image_transforms.h"
 #include "image_filters.h"
 
@@ -77,7 +77,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 		}
 	}
 
-	free(image_block);
+	free(filtered_image[0]);
 	free(filtered_image);
 }
 
@@ -90,6 +90,16 @@ string getName(string name_base, int img_num){
 
 int main(int argc, char** argv){
 	if(!(argc == 15)){
+		/* arbitrary code for checking errors
+		string input_path = ".\\";
+		string output_path = ".\\";
+		string input_base = "rings_";
+		string output_base = "debug_test_";
+		int first_img_num = 1;
+		int last_img_num = 11;
+
+		/* end error checking stuff */
+	
 		printf("\nUsage:\n\nring_remover_recon [input path] [output path] [input root] [output root] [first file num] [last file num] [center x y] [max ring width] [thresh min max] [ring threshold] [angular min] [verbose]\n\n");
 		printf("      [input path]    Path to the folder containing the input images.\n");
 		printf("     [output path]    Path to the folder to hold the filtered images.\n");
@@ -111,10 +121,11 @@ int main(int argc, char** argv){
 	}else{
 		TIFFSetWarningHandler(NULL);
 		TIFFSetErrorHandler(NULL);
-
+		
 		int first_img_num;
 		int last_img_num;
-		int verbose;
+		
+		int verbose = 1;
 		int num_files;
 		int width=0;
 		int height=0;
@@ -129,12 +140,11 @@ int main(int argc, char** argv){
 		string input_base, input_name, input_path;
 		string output_base, output_name, output_path;
 	//	default values for lego only
-		float center_x=511, center_y=511, thresh_max=0.0018, thresh_min=0.0006, threshold = 0.00034;
+	//	float center_x=511, center_y=511, thresh_max=0.0018, thresh_min=0.0006, threshold = 0.00034;
 	//	defualt values for large rings only
-	//	float center_x=1240.5, center_y=1240.5, thresh_max = 20, thresh_min = -20, threshold = 6;
+		float center_x=1279.5, center_y=1279.5, thresh_max = 20, thresh_min = -20, threshold = 6; angular_min = 80;
 	//	default values for test case:
 	//	float center_x, center_y, thresh_max = 20, thresh_min = -20, threshold = 1.0;
-		char * filter;
 		
 		ImageFilterClass* filter_machine = new ImageFilterClass();
 		ImageTransformClass* transform_machine = new ImageTransformClass();
@@ -160,7 +170,7 @@ int main(int argc, char** argv){
 		threshold = atof(argv[12]);
 		angular_min = atoi(argv[13]);
 		verbose = atoi(argv[14]);
-
+		
 		//Checks for correct input parameters:
 		if(first_img_num < 0 || first_img_num > last_img_num){
 			fprintf(stderr, "Error:  illegal use of image number parameters. Call program with no arguments to see proper usage.\n");
@@ -195,7 +205,7 @@ int main(int argc, char** argv){
 			image = tiff_io->readFloatImage(input_path + input_name, &width, &height);    //pixel data is stored in the form image[row][col]
 
 			if(!image){
-				fprintf(stderr, "Error: unable to open file %s.\n", input_path+input_name);
+				fprintf(stderr, "Error: unable to open file %s.\n", (input_path+input_name).c_str());
 			}else{
 				if(center_x < 0 || center_y < 0 || center_x >= width || center_y >= height){
 					fprintf(stderr, "Error: invalid center value (out of range). Call program with no arguments to see proper usage.\n");
@@ -210,7 +220,9 @@ int main(int argc, char** argv){
 				if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
 				m_azi = ceil(float(pol_height)/(360.0))*angular_min;	
 				//Call Ring Algorithm
-
+				if(img == 7){
+					printf("got to 7!");
+				}
 				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
 						
 				//Translate Ring-Image to Cartesian Coordinates
