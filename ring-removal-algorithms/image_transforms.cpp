@@ -44,7 +44,7 @@ float** ImageTransformClass::polarTransform(float** image, float center_x, float
 		polar_image[i] = polar_image[i-1] + pol_width;
 	}
 	for(int row = 0; row<pol_height; row++){
-		for(int r = 0; r < pol_width; r++){
+		for(int r = 0; r <= pol_width - r_scale; r++){
 			//float theta = float(row)/float(*pol_height)*3.0*PI - PI/2.0; //gives theta in the range [-PI/2, 5PI/2]
 			float theta = float(row)*2.0*PI/float(pol_height);
 			float fl_x = float(r)*cos(theta)/float(r_scale);

@@ -6,8 +6,8 @@
 #include <cmath>
 #include "time.h"
 
-#include "tiff_io-win.h"
-//#include "tiff_io.h"
+//#include "tiff_io-win.h"
+#include "tiff_io.h"
 #include "image_transforms.h"
 #include "image_filters.h"
 
@@ -201,7 +201,7 @@ int main(int argc, char** argv){
 			output_name = getName(output_base, img);
 
 			//read in image, perform thresholding
-
+			if(verbose == 1)printf("Opening file %s...\n", input_name.c_str());
 			image = tiff_io->readFloatImage(input_path + input_name, &width, &height);    //pixel data is stored in the form image[row][col]
 
 			if(!image){
@@ -254,7 +254,7 @@ int main(int argc, char** argv){
 				free(image);
 			}
 		}
-		if(verbose ==1)printf("Ring Removal completed!");
+		if(verbose ==1)printf("Ring Removal completed!\n");
 		return 0;
 	}
 }
