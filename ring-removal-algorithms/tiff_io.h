@@ -14,7 +14,8 @@
  class TiffIO
  {
  private:
-	
+	float min_val;
+	float max_val;
  public:
 	TiffIO();
 	~TiffIO();
