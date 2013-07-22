@@ -123,28 +123,7 @@ float** ImageTransformClass::polarTransformBilinear(float** image, float center_
 
 	return polar_image;
 }
-/*
-float** ImageTransformClass::inversePolarTransform(float** polar_image, float center_x,
-                                                   float center_y, int pol_width, int  pol_height,
-                                                   int width, int height, int r_scale,
-                                                   int over_hang)
-{
-	float** cart_image = (float **) calloc(height, sizeof(float *));
-	for(int i = 0; i < height; i++){
-		cart_image[i] = (float *) calloc(width, sizeof(float));
-	}
-	for(int row = 0; row < pol_height; row++){
-		for(int r = 0; r < pol_width; r++){
-			//float theta = float(row)/float(pol_height)*3.0*PI - PI/2.0;
-			float theta = float(row)*2.0*PI/float(pol_height); 
-			int x = round(float(r)*cos(theta)/float(r_scale) + float(center_x));
-			int y = round(float(r)*sin(theta)/float(r_scale) + float(center_y));
-			cart_image[y][x] = polar_image[row][r];
-		}
-	}
-	return cart_image;
-}
-*/
+
 float** ImageTransformClass::inversePolarTransform(float** polar_image, float center_x,
                                                    float center_y, int pol_width, int  pol_height,
                                                    int width, int height, int r_scale,

@@ -14,12 +14,20 @@
  class TiffIO
  {
  private:
+	static const int NUM_HISTOGRAM_BINS = 256;
+	
 	float min_val;
 	float max_val;
- public:
+	int width;
+	int height;
+	
+	void createHistogram(float** image_rows);
+ public:	
+	int* histogram;
+	
 	TiffIO();
 	~TiffIO();
-	float** readFloatImage(std::string input_name, int* w_ptr, int* h_ptr);
+	float** readFloatImage(std::string input_name, int* w_ptr, int* h_ptr, bool do_histogram);
 	void writeFloatImage(float** image, std::string output_name, int width, int height);
  
  };

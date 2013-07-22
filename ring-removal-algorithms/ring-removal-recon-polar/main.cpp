@@ -6,8 +6,8 @@
 #include <cmath>
 #include "time.h"
 
-//#include "tiff_io-win.h"
-#include "tiff_io.h"
+#include "tiff_io-win.h"
+//#include "tiff_io.h"
 #include "image_transforms.h"
 #include "image_filters.h"
 
@@ -49,7 +49,6 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 		for(int col = 0; col <  pol_width; col++){
 			polar_image[0][row][col] -= filtered_image[row][col];
 			if(polar_image[0][row][col] > threshold || polar_image[0][row][col] < -threshold){
-	//		if(polar_image[0][row][col] < threshold){
 				polar_image[0][row][col] = 0;
 			}
 		}
@@ -58,7 +57,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	/* Do Azimuthal filter #2 (faster mean, does whole column in one call)
 	 * using different kernel sizes for the different regions of the image (based on radius)
 	 */
-
+	/*
 	if(verbose == 1) printf("Performing Azimuthal mean filter... \n");
 	clock_t start_mean = clock();
 
@@ -76,7 +75,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 			polar_image[0][row][col] = filtered_image[row][col];
 		}
 	}
-
+	*/
 	free(filtered_image[0]);
 	free(filtered_image);
 }
@@ -220,9 +219,6 @@ int main(int argc, char** argv){
 				if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
 				m_azi = ceil(float(pol_height)/(360.0))*angular_min;	
 				//Call Ring Algorithm
-				if(img == 7){
-					printf("got to 7!");
-				}
 				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
 						
 				//Translate Ring-Image to Cartesian Coordinates
@@ -243,7 +239,7 @@ int main(int argc, char** argv){
 	
 				//Write out Corrected-Image
 				if(verbose == 1) printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
-				tiff_io->writeFloatImage(image, output_path + output_name, width, height);
+				tiff_io->writeFloatImage(polar_image, output_path + output_name, pol_width, pol_height);
 				clock_t end = clock();
 				if(verbose == 1) printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
 				free(ring_image[0]);
