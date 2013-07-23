@@ -57,7 +57,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	/* Do Azimuthal filter #2 (faster mean, does whole column in one call)
 	 * using different kernel sizes for the different regions of the image (based on radius)
 	 */
-	/*
+	
 	if(verbose == 1) printf("Performing Azimuthal mean filter... \n");
 	clock_t start_mean = clock();
 
@@ -75,7 +75,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 			polar_image[0][row][col] = filtered_image[row][col];
 		}
 	}
-	*/
+	
 	free(filtered_image[0]);
 	free(filtered_image);
 }
@@ -191,6 +191,8 @@ int main(int argc, char** argv){
 			verbose = 0;
 		}
 
+		m_rad = ring_width/2;
+
 		//do ring removal for all images
 		for(int img = first_img_num; img < last_img_num + 1; img++){
 
@@ -213,19 +215,19 @@ int main(int argc, char** argv){
 				//Translate Image to Polar Coordinates
 				if(verbose == 1) printf("Performing Polar Transformation...\n");
 				clock_t start_polar = clock();
-//				polar_image = transform_machine->polarTransformBilinear(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
-				polar_image = transform_machine->polarTransform(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
+				polar_image = transform_machine->polarTransformBilinear(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
+//				polar_image = transform_machine->polarTransform(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
 				clock_t end_polar = clock();
 				if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
-				m_azi = ceil(float(pol_height)/(360.0))*angular_min;	
+				m_azi = ceil(float(pol_height)*float(angular_min)/(360.0));	
 				//Call Ring Algorithm
 				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
 						
 				//Translate Ring-Image to Cartesian Coordinates
 				if(verbose == 1) printf("Doing inverse polar transform...\n");
 				clock_t start_invpol = clock();
-//				ring_image = transform_machine->inversePolarTransformBilinear(polar_image, center_x, center_y, pol_width, pol_height, width, height, r_scale, ring_width);
-				ring_image = transform_machine->inversePolarTransform(polar_image, center_x, center_y, pol_width, pol_height, width, height, r_scale, ring_width);
+				ring_image = transform_machine->inversePolarTransformBilinear(polar_image, center_x, center_y, pol_width, pol_height, width, height, r_scale, ring_width);
+//				ring_image = transform_machine->inversePolarTransform(polar_image, center_x, center_y, pol_width, pol_height, width, height, r_scale, ring_width);
 				clock_t end_invpol = clock();
 				if(verbose == 1) printf("Time for Inverse Polar Transform: %f sec\n", (float(end_invpol - start_invpol)/CLOCKS_PER_SEC));
 
@@ -239,7 +241,7 @@ int main(int argc, char** argv){
 	
 				//Write out Corrected-Image
 				if(verbose == 1) printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
-				tiff_io->writeFloatImage(polar_image, output_path + output_name, pol_width, pol_height);
+				tiff_io->writeFloatImage(image, output_path + output_name, width, height);
 				clock_t end = clock();
 				if(verbose == 1) printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
 				free(ring_image[0]);

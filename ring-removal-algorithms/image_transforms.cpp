@@ -31,6 +31,7 @@ float** ImageTransformClass::polarTransform(float** image, float center_x, float
                                             float thresh_max, float thresh_min, int r_scale,
                                             int ang_scale, int overhang)
 {
+	
 	int max_r = findMinDistanceToEdge(center_x, center_y, width, height);
 	int pol_width = r_scale*max_r;
 	int pol_height = round(ang_scale*2.0*PI*float(max_r));
@@ -60,7 +61,6 @@ float** ImageTransformClass::polarTransform(float** image, float center_x, float
 			}
 		}
 	}
-
 	return polar_image;
 }
 
