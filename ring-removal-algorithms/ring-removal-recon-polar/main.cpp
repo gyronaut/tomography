@@ -6,8 +6,8 @@
 #include <cmath>
 #include "time.h"
 
-//#include "tiff_io-win.h"
-#include "tiff_io.h"
+#include "tiff_io-win.h"
+//#include "tiff_io.h"
 #include "image_transforms.h"
 #include "image_filters.h"
 
@@ -38,7 +38,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
 
 	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad, ring_width, pol_width, pol_height);
-	
+
 	clock_t end_median = clock();
 	if(verbose == 1) printf("Time for median filter: %f sec \n", (float(end_median - start_median)/CLOCKS_PER_SEC));
 
@@ -49,7 +49,6 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 		for(int col = 0; col <  pol_width; col++){
 			polar_image[0][row][col] -= filtered_image[row][col];
 			if(polar_image[0][row][col] > threshold || polar_image[0][row][col] < -threshold){
-	//		if(polar_image[0][row][col] < threshold){
 				polar_image[0][row][col] = 0;
 			}
 		}
@@ -58,17 +57,22 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	/* Do Azimuthal filter #2 (faster mean, does whole column in one call)
 	 * using different kernel sizes for the different regions of the image (based on radius)
 	 */
-
+	
 	if(verbose == 1) printf("Performing Azimuthal mean filter... \n");
 	clock_t start_mean = clock();
-
+	
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi, pol_width, pol_height);
-
+	
+//	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'y', m_azi, pol_width, pol_height);
+	
+	//test case with azi median filter
+//	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'y', m_azi, ring_width, pol_width, pol_height);
+	
 	clock_t end_mean = clock();
-	if(verbose == 1) printf("Time for mean filtering: %f sec\n", (float(end_mean-start_mean)/CLOCKS_PER_SEC));
-
+	if(verbose == 1) printf("Time for Azi mean filtering: %f sec\n", (float(end_mean-start_mean)/CLOCKS_PER_SEC));
+	
 	if(verbose == 1) printf("Setting polar image equal to final ring image.. \n");
 	//Set "polar_image" to the fully filtered data
 	for(int row = 0; row < pol_height; row++){
@@ -76,7 +80,7 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 			polar_image[0][row][col] = filtered_image[row][col];
 		}
 	}
-
+	
 	free(filtered_image[0]);
 	free(filtered_image);
 }
@@ -164,7 +168,7 @@ int main(int argc, char** argv){
 		last_img_num = atoi(argv[6]);
 		center_x = atof(argv[7]);
 		center_y = atof(argv[8]);
-		ring_width = atoi(argv[9])*r_scale;
+		ring_width = atoi(argv[9])*r_scale*2;
 		thresh_min = atof(argv[10]);
 		thresh_max = atof(argv[11]);
 		threshold = atof(argv[12]);
@@ -192,6 +196,8 @@ int main(int argc, char** argv){
 			verbose = 0;
 		}
 
+		m_rad = ring_width/2;
+
 		//do ring removal for all images
 		for(int img = first_img_num; img < last_img_num + 1; img++){
 
@@ -218,11 +224,10 @@ int main(int argc, char** argv){
 				polar_image = transform_machine->polarTransform(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
 				clock_t end_polar = clock();
 				if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
-				m_azi = ceil(float(pol_height)/(360.0))*angular_min;	
+				m_azi = ceil(float(pol_height)*float(angular_min)/(360.0));	
+				
 				//Call Ring Algorithm
-				if(img == 7){
-					printf("got to 7!");
-				}
+				if(verbose) printf("Adjusted Ring Width: %d, Adjusted Angular Range: %d\n", ring_width, m_azi);
 				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
 						
 				//Translate Ring-Image to Cartesian Coordinates

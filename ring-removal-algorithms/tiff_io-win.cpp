@@ -13,6 +13,8 @@ TiffIO::~TiffIO()
 float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr)
 {
 	int width, height;
+	this->max_val = -1000;
+	this->min_val = 1000;
 
 	TIFF* tif = TIFFOpen(image_name.c_str(), "r");
 
@@ -46,6 +48,8 @@ float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr)
 		TIFFReadEncodedStrip(tif, strip, buffer, bc[strip]);
 		for(int i=0; i< bc[strip]/sizeof(float); i++){
 			image[location+i] = buffer[i];
+			if(buffer[i] > max_val) max_val = buffer[i];
+			if(buffer[i] < min_val) min_val = buffer[i];
 		}
 		location += stripsize/sizeof(float);
 	}
