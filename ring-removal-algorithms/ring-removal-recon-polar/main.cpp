@@ -33,11 +33,11 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 //	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'x', (ring_width -1)/2, ring_width, pol_width, pol_height);	
 //	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'x', (ring_width - 1)/2, ring_width, pol_width, pol_height);
 		
-	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad/3, ring_width, pol_width, pol_height);
 
 	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
 
-	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad, ring_width, pol_width, pol_height);
 	
 	clock_t end_median = clock();
 	if(verbose == 1) printf("Time for median filter: %f sec \n", (float(end_median - start_median)/CLOCKS_PER_SEC));
@@ -135,8 +135,8 @@ int main(int argc, char** argv){
 		int m_azi;
 		int angular_min;
 		int ring_width = 25;
-		int r_scale = 2;
-		int ang_scale = 2;
+		int r_scale = 1;
+		int ang_scale = 1;
 		string input_base, input_name, input_path;
 		string output_base, output_name, output_path;
 	//	default values for lego only

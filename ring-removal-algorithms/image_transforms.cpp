@@ -164,7 +164,7 @@ float** ImageTransformClass::inversePolarTransform(float** polar_image, float ce
 				theta+= 2*PI;
 			}
 			int pol_row = round(theta*float(pol_height)/(2.0*PI)); 
-			int pol_col = r_scale*sqrt((row-center_y)*(row-center_y) + (col-center_x)*(col-center_x));
+			int pol_col = round(float(r_scale)*sqrt((row-center_y)*(row-center_y) + (col-center_x)*(col-center_x)));
 			if(pol_row < pol_height && pol_col < pol_width){
 				cart_image[row][col] = polar_image[pol_row][pol_col];
 			}else{
