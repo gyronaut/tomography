@@ -10,22 +10,10 @@ TiffIO::~TiffIO()
 {
 }
 
-void TiffIO::createHistogram(float** image){
-	histogram = (int*) calloc(NUM_HISTOGRAM_BINS, sizeof(int));
-	float range = max_val - min_val;
-	for(int row = 0; row < height; row++){
-		for(int col = 0; col < width; col++){
-			int index = floor(((image[row][col] - min_val)/range)*NUM_HISTOGRAM_BINS);
-			if(index == NUM_HISTOGRAM_BINS)index--;
-			histogram[index]++;
-		}
-	}	
-}
-
-float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr, bool do_histogram)
+float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr)
 {
-	this->max_val = -1000;
-	this->min_val = 1000;
+	int width, height;
+
 	TIFF* tif = TIFFOpen(image_name.c_str(), "r");
 
 	if(!tif){
@@ -58,8 +46,6 @@ float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr, bool d
 		TIFFReadEncodedStrip(tif, strip, buffer, bc[strip]);
 		for(int i=0; i< bc[strip]/sizeof(float); i++){
 			image[location+i] = buffer[i];
-			if(buffer[i] > max_val) max_val = buffer[i];
-			if(buffer[i] < min_val) min_val = buffer[i];
 		}
 		location += stripsize/sizeof(float);
 	}
@@ -70,7 +56,6 @@ float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr, bool d
 	for (int i=1; i<height; i++) {
 		image_rows[i] = image_rows[i-1] + width;
 	}
-	if(do_histogram)createHistogram(image_rows);
 	return image_rows;
 }
 
