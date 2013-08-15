@@ -61,16 +61,10 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 
 	if(verbose == 1) printf("Performing Azimuthal mean filter... \n");
 	clock_t start_mean = clock();
-/*
+
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi, pol_width, pol_height);
-*/
-	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'y', m_azi, ring_width, pol_width, pol_height);
-
-	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'y', 2*m_rad/3, ring_width, pol_width, pol_height);
-
-	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi/3, ring_width, pol_width, pol_height);
 
 	clock_t end_mean = clock();
 	if(verbose == 1) printf("Time for mean filtering: %f sec\n", (float(end_mean-start_mean)/CLOCKS_PER_SEC));
