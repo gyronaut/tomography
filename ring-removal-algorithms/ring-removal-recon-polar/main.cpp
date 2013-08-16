@@ -33,11 +33,9 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 //	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'x', (ring_width -1)/2, ring_width, pol_width, pol_height);	
 //	filter_machine->doMedianFilter1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width-1, 'x', (ring_width - 1)/2, ring_width, pol_width, pol_height);
 		
-	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad, ring_width, pol_width, pol_height);
-
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'x', m_rad/3, ring_width, pol_width, pol_height);
 	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'x', 2*m_rad/3, ring_width, pol_width, pol_height);
-
-	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad/3, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'x', m_rad, ring_width, pol_width, pol_height);
 	
 	clock_t end_median = clock();
 	if(verbose == 1) printf("Time for median filter: %f sec \n", (float(end_median - start_median)/CLOCKS_PER_SEC));
@@ -65,7 +63,11 @@ void doRingFilter(float*** polar_image, int pol_height, int pol_width, float thr
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3-1, 'y', m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3-1, 'y', 2*m_azi/3, pol_width, pol_height);
 	filter_machine->doMeanFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi, pol_width, pol_height);
-
+/*
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 0, pol_height-1, pol_width/3 -1, 'y', m_azi/3, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, pol_width/3, pol_height-1, 2*pol_width/3 -1, 'y', 2*m_azi/3, ring_width, pol_width, pol_height);
+	filter_machine->doMedianFilterFast1D(&filtered_image, polar_image, 0, 2*pol_width/3, pol_height-1, pol_width-1, 'y', m_azi, ring_width, pol_width, pol_height);
+*/	
 	clock_t end_mean = clock();
 	if(verbose == 1) printf("Time for mean filtering: %f sec\n", (float(end_mean-start_mean)/CLOCKS_PER_SEC));
 
@@ -223,7 +225,7 @@ int main(int argc, char** argv){
 				if(img == 7){
 					printf("got to 7!");
 				}
-				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
+//				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
 						
 				//Translate Ring-Image to Cartesian Coordinates
 				if(verbose == 1) printf("Doing inverse polar transform...\n");
@@ -243,7 +245,7 @@ int main(int argc, char** argv){
 	
 				//Write out Corrected-Image
 				if(verbose == 1) printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
-				tiff_io->writeFloatImage(image, output_path + output_name, width, height);
+				tiff_io->writeFloatImage(polar_image, output_path + output_name, pol_width, pol_height);
 				clock_t end = clock();
 				if(verbose == 1) printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
 				free(ring_image[0]);
