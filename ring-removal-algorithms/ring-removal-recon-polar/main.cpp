@@ -225,7 +225,7 @@ int main(int argc, char** argv){
 				if(img == 7){
 					printf("got to 7!");
 				}
-//				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
+				doRingFilter(&polar_image, pol_height, pol_width, threshold, m_rad, m_azi, ring_width, filter_machine, verbose);
 						
 				//Translate Ring-Image to Cartesian Coordinates
 				if(verbose == 1) printf("Doing inverse polar transform...\n");
@@ -245,7 +245,7 @@ int main(int argc, char** argv){
 	
 				//Write out Corrected-Image
 				if(verbose == 1) printf("Writing out corrected image to %s.\n", (output_path+output_name).c_str());
-				tiff_io->writeFloatImage(polar_image, output_path + output_name, pol_width, pol_height);
+				tiff_io->writeFloatImage(image, output_path + output_name, width, height);
 				clock_t end = clock();
 				if(verbose == 1) printf("Total time to perform ring filtering: %f sec\n", (float(end-start))/CLOCKS_PER_SEC);
 				free(ring_image[0]);
