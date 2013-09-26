@@ -220,7 +220,8 @@ int main(int argc, char** argv){
 				polar_image = transform_machine->polarTransform(image, center_x, center_y, width, height, &pol_width, &pol_height, thresh_max, thresh_min, r_scale, ang_scale, ring_width);
 				clock_t end_polar = clock();
 				if(verbose == 1) printf("Time for polar Transformation: %f sec\n", (float(end_polar - start_polar)/CLOCKS_PER_SEC));
-				m_azi = ceil(float(pol_height)/(360.0))*angular_min;	
+				m_azi = ceil(float(pol_height)/(360.0))*angular_min;
+				m_rad = 2*ring_width+1;
 				//Call Ring Algorithm
 				if(img == 7){
 					printf("got to 7!");

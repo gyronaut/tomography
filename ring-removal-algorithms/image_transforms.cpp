@@ -45,10 +45,9 @@ float** ImageTransformClass::polarTransform(float** image, float center_x, float
 	}
 	for(int row = 0; row<pol_height; row++){
 		for(int r = 0; r <= pol_width - r_scale; r++){
-			//float theta = float(row)/float(*pol_height)*3.0*PI - PI/2.0; //gives theta in the range [-PI/2, 5PI/2]
 			float theta = float(row)*2.0*PI/float(pol_height);
-			float fl_x = float(r)*cos(theta)/float(r_scale);
-			float fl_y = float(r)*sin(theta)/float(r_scale);
+			float fl_x = float(r)*cos(theta + (PI/float(pol_height)))/float(r_scale);
+			float fl_y = float(r)*sin(theta + (PI/float(pol_height)))/float(r_scale);
 			int x = round(fl_x + float(center_x));
 			int y = round(fl_y + float(center_y));
 			
@@ -137,8 +136,7 @@ float** ImageTransformClass::inversePolarTransform(float** polar_image, float ce
 	}
 	for(int row=0; row < height; row++){
 		for(int col = 0; col < width; col++){
-			//float theta = float(row)/float(pol_height)*3.0*PI - PI/2.0;
-			float theta = atan2(float(row) - center_y, float(col)-center_x);
+			float theta = atan2(float(row) - center_y, float(col)-center_x) - (PI/float(pol_height));
 			if(theta <0){
 				theta+= 2*PI;
 			}

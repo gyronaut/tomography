@@ -59,6 +59,55 @@ float** TiffIO::readFloatImage(string image_name, int* w_ptr, int* h_ptr)
 	return image_rows;
 }
 
+float** TiffIO::read16bitImage(string image_name, int* w_ptr, int* h_ptr)
+{
+	int width, height;
+
+	TIFF* tif = TIFFOpen(image_name.c_str(), "r");
+
+	if(!tif){
+		return NULL;
+	}
+
+	TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+	TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
+	*w_ptr = width;
+	*h_ptr = height;
+
+	float* image = (float*) calloc(width*height, sizeof(float));
+	float** image_rows = (float**) calloc(height, sizeof(float *));
+
+
+	uint16 *buffer;
+	tstrip_t strip;
+	uint32* bc;
+	uint32 stripsize;
+	uint16 num_strips= TIFFNumberOfStrips(tif);
+	TIFFGetField(tif, TIFFTAG_STRIPBYTECOUNTS, &bc);
+	stripsize = bc[0];
+	buffer = (uint16 *)_TIFFmalloc(stripsize);
+	uint32 location = 0;
+	for (strip = 0; strip < num_strips; strip++) {
+		if (bc[strip] != stripsize) {
+			buffer = (uint16 *)_TIFFrealloc(buffer, bc[strip]);
+			stripsize = bc[strip];
+		}
+		TIFFReadEncodedStrip(tif, strip, buffer, bc[strip]);
+		for(int i=0; i< bc[strip]/sizeof(float); i++){
+			image[location+i] = float(buffer[i]);
+		}
+		location += stripsize/sizeof(uint16);
+	}
+	_TIFFfree(buffer);
+	TIFFClose(tif);
+
+	image_rows[0] = image;
+	for (int i=1; i<height; i++) {
+		image_rows[i] = image_rows[i-1] + width;
+	}
+	return image_rows;
+}
+
 void TiffIO::writeFloatImage(float** image_rows, string output_name, int width, int height)
 {
 	float* output = (float *) calloc(width*height, sizeof(float));
