@@ -85,17 +85,31 @@ int main (int argc, char** argv){
 					j_end = width - step*j_rad - 1;
 					for(j_0 = j_start; j_0 <= j_end; j_0++){
 						// set up sub_sinogram(n, j)
-						int min = 100000;
-						int max = -100000;
+						float min = 100000;
+						float max = -100000;
 						for(int row = 0; row < height; row++){
 							for(int sino_col = 0, img_col = j_0 - step*j_rad; sino_col < 2*j_rad+1; sino_col++, img_col += step){
 								sub_sinogram[row][sino_col] = image[row][img_col];
-								if(sub_sinogram[row][sino_col] > max) max = image[row][img_col];
-								if(sub_sinogram[row][sino_col] < min) min = image[row][img_col];
+								if(sub_sinogram[row][sino_col] > max) max = sub_sinogram[row][sino_col];
+								if(sub_sinogram[row][sino_col] < min) min = sub_sinogram[row][sino_col];
 							}
 						}
+						if(j_0 == j_end){
+							FILE* subsinogram = fopen("D:\\subsinogram.log", "w");
+							fprintf(subsinogram, "J_0: %d\n", j_0);
+							for(int row = 0; row < height; row++){
+								for(int sino_col = 0; sino_col < 2*j_rad+1; sino_col++){
+									fprintf(subsinogram, "%f ", sub_sinogram[row][sino_col]);
+								}
+								fprintf(subsinogram, "\n");
+							}
+							fclose(subsinogram);
+						}
+						
+
 						int total_deriv_sum = 0;
-						//if(verbose) fprintf(stdout, "Normalizing sub_sinogram (%d, %d)...\n", step, j_0);
+						
+						//if(verbose)fprintf(stdout, "Min: %f, Max: %f /n", min, max);
 						// normalize sub_sinogram(n, j)
 						for(int row = 0; row < height; row++){
 							for(int col = 0; col < 2*j_rad+1; col++){
@@ -106,6 +120,19 @@ int main (int argc, char** argv){
 								derivative_sum[col] += (2*sub_sinogram[row][col] - sub_sinogram[row][col-1] - sub_sinogram[row][col+1]);
 							}
 						}
+
+						if(j_0 == j_end){
+							FILE* norm_subsinogram = fopen("D:\\norm_subsinogram.log", "w");
+							fprintf(norm_subsinogram, "J_0: %d\n", j_0);
+							for(int row = 0; row < height; row++){
+								for(int sino_col = 0; sino_col < 2*j_rad+1; sino_col++){
+									fprintf(norm_subsinogram, "%f ", sub_sinogram[row][sino_col]);
+								}
+								fprintf(norm_subsinogram, "\n");
+							}
+							fclose(norm_subsinogram);
+						}
+
 						for(int col = 0; col < 2*j_rad+1; col++){
 							total_deriv_sum += fabs(derivative_sum[col]);
 						}
@@ -122,7 +149,11 @@ int main (int argc, char** argv){
 					if(verbose) fprintf(stderr, "Error opening the log file, aborting log.\n");
 				}else{
 					for(int i = 0; i < width; i++){
-						fprintf(fp, "%f \n", ratio_array[i]);
+						fprintf(fp, "%f", ratio_array[i]);
+						if(ratio_array[i] > 10){
+							fprintf(fp, "    !!!");
+						}
+						fprintf(fp, "\n");
 					}
 				}
 				FILE* derivlog = fopen("D:\\derivative_log.txt", "w");
@@ -133,6 +164,7 @@ int main (int argc, char** argv){
 						fprintf(derivlog, "%f \n", derivative_sum[i]);
 					}
 				}
+				tiff_io->writeFloatImage(image, output_path+output_name, width, height);
 			}
 		}
 	}

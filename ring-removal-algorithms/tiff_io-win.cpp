@@ -93,7 +93,7 @@ float** TiffIO::read16bitImage(string image_name, int* w_ptr, int* h_ptr)
 			stripsize = bc[strip];
 		}
 		TIFFReadEncodedStrip(tif, strip, buffer, bc[strip]);
-		for(int i=0; i< bc[strip]/sizeof(float); i++){
+		for(int i=0; i< bc[strip]/sizeof(uint16); i++){
 			image[location+i] = float(buffer[i]);
 		}
 		location += stripsize/sizeof(uint16);
