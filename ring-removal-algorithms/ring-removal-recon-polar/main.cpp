@@ -141,10 +141,11 @@ int main(int argc, char** argv){
 		int ang_scale = 1;
 		string input_base, input_name, input_path;
 		string output_base, output_name, output_path;
+		float center_x, center_y, thresh_max, thresh_min, threshold;
 	//	default values for lego only
 	//	float center_x=511, center_y=511, thresh_max=0.0018, thresh_min=0.0006, threshold = 0.00034;
 	//	defualt values for large rings only
-		float center_x=1279.5, center_y=1279.5, thresh_max = 20, thresh_min = -20, threshold = 6; angular_min = 80;
+	//	float center_x=1279.5, center_y=1279.5, thresh_max = 20, thresh_min = -20, threshold = 6; angular_min = 80;
 	//	default values for test case:
 	//	float center_x, center_y, thresh_max = 20, thresh_min = -20, threshold = 1.0;
 		
@@ -209,9 +210,12 @@ int main(int argc, char** argv){
 			if(!image){
 				fprintf(stderr, "Error: unable to open file %s.\n", (input_path+input_name).c_str());
 			}else{
-				if(center_x < 0 || center_y < 0 || center_x >= width || center_y >= height){
-					fprintf(stderr, "Error: invalid center value (out of range). Call program with no arguments to see proper usage.\n");
-					return 1;
+				if(center_x <= 0 || center_y <= 0 || center_x >= width || center_y >= height){
+					if(center_x != 0 || center_y != 0){
+						fprintf(stderr, "Error: invalid center value (out of range). Using center of input image instead.\n");
+					}
+					center_x = (width - 1.0)/2.0;
+					center_y = (height - 1.0)/2.0;
 				}
 				//Translate Image to Polar Coordinates
 				if(verbose == 1) printf("Performing Polar Transformation...\n");

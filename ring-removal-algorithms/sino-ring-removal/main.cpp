@@ -51,15 +51,15 @@ int main (int argc, char** argv){
 			verbose = 1;
 		}
 
-		j_rad = 5;
-		step_max = 3;
+		j_rad = 6;
+		step_max = 5;
 
 		for(int img_num = first_img_num; img_num <= last_img_num; img_num++){
 			float **image=0, **filtered_image=0;
 
 			float ratio;
 			
-			float* derivative_sum = (float*) calloc((2*j_rad + 1), sizeof(float));
+			float* derivative_sum = 0;
 
 			input_name = getName(input_base, img_num);
 			output_name = getName(output_base, img_num);
@@ -84,6 +84,9 @@ int main (int argc, char** argv){
 					j_start = step*j_rad;
 					j_end = width - step*j_rad - 1;
 					for(j_0 = j_start; j_0 <= j_end; j_0++){
+
+						derivative_sum = (float*) calloc((2*j_rad + 1), sizeof(float));
+						
 						// set up sub_sinogram(n, j)
 						float min = 100000;
 						float max = -100000;
@@ -136,8 +139,8 @@ int main (int argc, char** argv){
 						for(int col = 0; col < 2*j_rad+1; col++){
 							total_deriv_sum += fabs(derivative_sum[col]);
 						}
-						if(((derivative_sum[j_rad] <= 0)==(derivative_sum[j_rad-1] <=0)) && ((derivative_sum[j_rad] <= 0)==(derivative_sum[j_rad+1] <=0)) && (fabs(derivative_sum[j_rad]) > fabs(derivative_sum[j_rad - 1])) && (fabs(derivative_sum[j_rad]) > fabs(derivative_sum[j_rad + 1])) ){
-							ratio = (2*j_rad - 4)*(fabs(derivative_sum[j_rad]) + fabs(derivative_sum[j_rad -1]) + fabs(derivative_sum[j_rad-1]))/(3*(total_deriv_sum - (fabs(derivative_sum[j_rad]) + fabs(derivative_sum[j_rad-1]) + fabs(derivative_sum[j_rad+1]))));
+						if(((derivative_sum[j_rad] <= 0)==(derivative_sum[j_rad-1] >= 0)) && ((derivative_sum[j_rad] <= 0)==(derivative_sum[j_rad+1] >=0)) && (fabs(derivative_sum[j_rad]) > fabs(derivative_sum[j_rad - 1])) && (fabs(derivative_sum[j_rad]) > fabs(derivative_sum[j_rad + 1])) ){
+							ratio = (2*j_rad - 4)*(fabs(derivative_sum[j_rad]) + fabs(derivative_sum[j_rad-1]) + fabs(derivative_sum[j_rad+1]))/(3*(total_deriv_sum - (fabs(derivative_sum[j_rad]) + fabs(derivative_sum[j_rad-1]) + fabs(derivative_sum[j_rad+1]))));
 							if(ratio > ratio_array[j_0]) ratio_array[j_0] = ratio;
 						}
 					}
