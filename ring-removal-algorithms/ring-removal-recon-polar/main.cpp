@@ -206,7 +206,7 @@ int main(int argc, char** argv){
 			//read in image, perform thresholding
 			if(verbose == 1)printf("Opening file %s...\n", input_name.c_str());
 			image = tiff_io->readFloatImage(input_path + input_name, &width, &height);    //pixel data is stored in the form image[row][col]
-
+//			image = tiff_io->read16bitImage(input_path + input_name, &width, &height);    //pixel data is stored in the form image[row][col]
 			if(!image){
 				fprintf(stderr, "Error: unable to open file %s.\n", (input_path+input_name).c_str());
 			}else{

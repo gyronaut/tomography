@@ -149,3 +149,45 @@ void TiffIO::writeFloatImage(float** image_rows, string output_name, int width, 
 	free(output);
 	free(buffer);
 }
+
+void TiffIO::write16bitImage(float** image_rows, string output_name, int width, int height)
+{
+	uint16* output = (uint16 *) calloc(width*height, sizeof(uint16));
+	float* buffer = (float *) calloc(width, sizeof(float));
+	for(int i = 0; i < height; i++){
+		memcpy(buffer, image_rows[i], width*sizeof(float));
+		for(int j = 0; j < width; j++){
+			output[j+(i*width)] = (uint16)(buffer[j]); 
+		}
+	}
+	TIFF* tif = TIFFOpen(output_name.c_str(), "w");
+	if(!tif){
+		return;
+	}
+	TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);  
+	TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height);    
+	TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
+	TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, 1); //floating point = 3, unsigned int = 1
+	TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 16);
+	TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+	TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+	TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+	uint16 *tiff_buffer = NULL;
+	tsize_t linebytes =  width*sizeof(uint16);
+	tiff_buffer =(uint16 *)_TIFFmalloc(linebytes);
+	
+	for(uint32 row = 0; row < height; row++){
+		for(int col = 0; col < width; col++){
+			tiff_buffer[col] = output[col+row*width];
+		}
+		if (TIFFWriteScanline(tif, tiff_buffer, row, 0) < 0){
+			break;
+		}
+	}
+	TIFFClose(tif);
+	if(tiff_buffer){
+		_TIFFfree(tiff_buffer);
+	}
+	free(output);
+	free(buffer);
+}
