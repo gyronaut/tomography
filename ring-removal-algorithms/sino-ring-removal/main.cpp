@@ -18,7 +18,7 @@ string getName(string name_base, int img_num){
 }
 
 int main (int argc, char** argv){
-	if(argc != 8){
+	if(argc != 9){
 		fprintf(stdout, "Incorrect Usage");
 	}else{
 		TIFFSetWarningHandler(NULL);
@@ -28,6 +28,7 @@ int main (int argc, char** argv){
 		string input_path, input_base, input_name;
 		string output_path, output_base, output_name;
 		int width, height;
+		int brightfield_interval
 		int j_start, j_end, j_rad, j_0;
 		int step, step_max;
 
@@ -45,7 +46,8 @@ int main (int argc, char** argv){
 		}
 		first_img_num = atoi(argv[5]);
 		last_img_num = atoi(argv[6]);
-		verbose = atoi(argv[7]);
+		brightfield_interval = atoi(argv[7]);
+		verbose = atoi(argv[8]);
 
 		if(verbose > 1 || verbose < 0){
 			verbose = 1;
@@ -53,6 +55,8 @@ int main (int argc, char** argv){
 
 		j_rad = 6;
 		step_max = 5;
+		
+		// Main Iteration over specified images //
 
 		for(int img_num = first_img_num; img_num <= last_img_num; img_num++){
 			float **image=0, **filtered_image=0;
