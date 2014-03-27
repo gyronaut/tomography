@@ -29,7 +29,7 @@ Usage:
 
 (calling the program without any arguments will also print the usage to stdout)
 
-ring_remover_recon [input path] [output path] [input root] [output root] [first file num] [last file num] [center x y] [max ring width] [thresh min max] [ring threshold] [angular min] [verbose]
+    recon_ring_remover [input path] [output path] [input root] [output root] [first file num] [last file num] [center x y] [max ring width] [thresh min max] [ring threshold] [angular min] [verbose]
 
                        [input path]    Path to the folder containing the input images (32 bit floating point tiffs).
 
